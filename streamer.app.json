@@ -1,0 +1,61 @@
+{
+  "name": "streamer",
+  "modules": [
+    "//packages/streamer:streamer",
+    "message_generators"
+  ],
+  "graph": {
+    "nodes": [
+      {
+        "name": "streamer",
+        "components": [
+          {
+            "name": "message_ledger",
+            "type": "isaac::alice::MessageLedger"
+          },
+          {
+            "name": "Streamer",
+            "type": "isaac::streaming::Streamer"
+          }
+        ]
+      },
+      {
+        "name": "message_generator",
+        "components": [
+          {
+            "name": "message_leger",
+            "type": "isaac::alice::MessageLedger"
+          },
+          {
+            "name": "CameraGenerator",
+            "type": "isaac::message_generators::CameraGenerator"
+          }
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "source": "message_generator/CameraGenerator/color_left",
+        "target": "streamer/Streamer/color"
+      },
+      {
+        "source": "message_generator/CameraGenerator/color_right",
+        "target": "streamer/Streamer/depth"
+      }
+    ]
+  },
+  "config": {
+    "message_generator" : {
+      "CameraGenerator" : {
+        "tick_period": "30Hz",
+        "cols": 1280,
+        "rows": 720
+      }
+    },
+    "streamer" : {
+      "Streamer" : {
+        "pipeline" : "appsrc name=depth ! videoconvert ! autovideosink appsrc name=color ! videoconvert ! autovideosink"
+      }
+    }
+  }
+}
