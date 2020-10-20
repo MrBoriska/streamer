@@ -77,14 +77,13 @@ void Streamer::tick() {
     ASSERT(ok, "Failed to deserialize the depth image");
 
     // Show Images in Sight
+    show("framerate", 1/getTickDt());
     //show("image_color", [&](sight::Sop& sop) { sop.add(color_image); });
     //show("image_depth", [&](sight::Sop& sop) { sop.add(depth_image); });
     
     // Push images into Gstreamer pipeline (appsrc)
     pushBuffer(GST_APP_SRC_CAST(appsrc_color), color_image);
     pushBuffer(GST_APP_SRC_CAST(appsrc_depth), depth_image);
-
-    LOG_INFO("Framerate: %f", 1/getTickDt());
 }
 
 void Streamer::setCapsFromImage(GstAppSrc *appsrc, const ImageProto::Reader image_proto) {
@@ -115,12 +114,11 @@ void Streamer::pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image) 
     gst_buffer_fill(buffer, 0, (gpointer)to_gst_image.data().pointer(), size);
 
     if (buffer == NULL) {
-        LOG_ERROR("gst_buffer_new_wrapped_full() returned NULL!");
+        reportFailure("gst_buffer_new_wrapped_full() returned NULL!");
     } else {
         GstFlowReturn ret = gst_app_src_push_buffer(appsrc, buffer);
         if (ret < 0) {
-            LOG_ERROR("gst_app_src_push_buffer() returned error!");
-            stop();
+            reportFailure("gst_app_src_push_buffer() returned error!");
         }
     }
 }
