@@ -19,7 +19,7 @@
 //#include <boost/thread.hpp>
 
 #include "engine/alice/alice_codelet.hpp"
-
+#include "engine/gems/image/color.hpp"
 #include "messages/camera.hpp"
 #include "messages/math.hpp"
 
@@ -33,7 +33,7 @@ class Streamer : public alice::Codelet {
     void stop() override;
 
     ISAAC_PROTO_RX(ColorCameraProto, color);
-    ISAAC_PROTO_RX(ColorCameraProto, depth);
+    ISAAC_PROTO_RX(DepthCameraProto, depth);
 
     ISAAC_PARAM(std::string, pipeline);
     ISAAC_PARAM(int, framerate, 30);
@@ -41,6 +41,7 @@ class Streamer : public alice::Codelet {
     void setCapsFromImage(GstAppSrc *appsrc, const ImageProto::Reader image_proto);
     // Creating a new buffer and to send to the gstreamer pipeline
     void pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image);
+    void pushBuffer(GstAppSrc *appsrc, const ImageConstView1f rgba_image);
 
     static gboolean gstError(GstBus *bus, GstMessage *message, gpointer userData);
 

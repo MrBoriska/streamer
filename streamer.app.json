@@ -2,7 +2,8 @@
   "name": "streamer",
   "modules": [
     "//packages/streamer:streamer",
-    "message_generators"
+    "message_generators",
+    "viewers"
   ],
   "graph": {
     "nodes": [
@@ -31,6 +32,19 @@
             "type": "isaac::message_generators::CameraGenerator"
           }
         ]
+      },
+      {
+        "name": "viewer",
+        "components": [
+          {
+            "name": "message_ledger",
+            "type": "isaac::alice::MessageLedger"
+          },
+          {
+            "name": "DepthCameraViewer",
+            "type": "isaac::viewers::DepthCameraViewer"
+          }
+        ]
       }
     ],
     "edges": [
@@ -39,8 +53,12 @@
         "target": "streamer/Streamer/color"
       },
       {
-        "source": "message_generator/CameraGenerator/color_right",
+        "source": "message_generator/CameraGenerator/depth",
         "target": "streamer/Streamer/depth"
+      },
+      {
+        "source": "message_generator/CameraGenerator/depth",
+        "target": "viewer/DepthCameraViewer/depth_listener"
       }
     ]
   },
@@ -48,13 +66,18 @@
     "message_generator" : {
       "CameraGenerator" : {
         "tick_period": "30Hz",
-        "cols": 1280,
-        "rows": 720
+        "cols": 640,
+        "rows": 480
       }
     },
     "streamer" : {
       "Streamer" : {
         "pipeline" : "appsrc name=depth ! videoconvert ! autovideosink appsrc name=color ! videoconvert ! autovideosink"
+      }
+    },
+    "viewer" : {
+      "DepthCameraViewer": {
+        "max_visualization_depth": 10
       }
     }
   }
