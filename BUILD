@@ -13,10 +13,10 @@ load("//engine/build:isaac.bzl", "isaac_app", "isaac_cc_module")
 isaac_cc_module(
     name = "streamer",
     srcs = [
-        "Streamer.cpp",
+        "Streamer.cpp", "Reciever.cpp",
     ],
     hdrs = [
-        "Streamer.hpp",
+        "Streamer.hpp", "Reciever.hpp",
     ],
     visibility = ["//visibility:public"],
     deps = [
