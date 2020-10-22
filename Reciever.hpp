@@ -39,10 +39,7 @@ class Reciever : public alice::Codelet {
     ISAAC_PARAM(std::string, pipeline);
     ISAAC_PARAM(int, framerate, 30);
 
-    void setCapsFromImage(GstAppSrc *appsrc, const ImageProto::Reader image_proto);
     // Creating a new buffer and to send to the gstreamer pipeline
-    void pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image);
-    void pushBuffer(GstAppSrc *appsrc, const ImageConstView1f rgba_image);
     static gboolean gstError(GstBus *bus, GstMessage *message, gpointer userData);
     static GstFlowReturn onNewColor(GstAppSink *appsink, gpointer userData);
     static GstFlowReturn onNewDepth(GstAppSink *appsink, gpointer userData);
