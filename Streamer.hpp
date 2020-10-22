@@ -2,9 +2,6 @@
 
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
-//#include "opencv2/core.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/imgproc.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
@@ -15,8 +12,6 @@
 #include <fstream>
 
 #include <thread>
-
-//#include <boost/thread.hpp>
 
 #include "engine/alice/alice_codelet.hpp"
 
