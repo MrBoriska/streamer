@@ -22,8 +22,10 @@ isaac_cc_module(
     deps = [
         "@gstreamer",
         "@glib",
+        "//third_party:opencv",
         "//engine/core/image",
         "//engine/core/math",
+        "//engine/core/tensor",
         "//engine/gems/sight",
     ],
 )
@@ -33,6 +35,5 @@ isaac_app(
     modules = [
         "//packages/streamer:streamer",
         "message_generators",
-        "viewers",
     ],
 )
