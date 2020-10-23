@@ -33,8 +33,8 @@ class Reciever : public alice::Codelet {
     void tick() override;
     void stop() override;
 
-    ISAAC_PROTO_RX(ColorCameraProto, color);
-    ISAAC_PROTO_RX(DepthCameraProto, depth);
+    ISAAC_PROTO_TX(ColorCameraProto, color);
+    ISAAC_PROTO_TX(ColorCameraProto, depth);
 
     ISAAC_PARAM(std::string, pipeline);
     ISAAC_PARAM(int, framerate, 30);

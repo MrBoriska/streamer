@@ -53,8 +53,7 @@ void Reciever::start() {
     });
 
     // Sync by timestamps
-    synchronize(rx_color(), rx_depth());
-    tickOnMessage(rx_depth());
+    tickPeriodically();
 }
 
 void Reciever::tick() {
@@ -67,53 +66,85 @@ void Reciever::tick() {
     // Push images into Gstreamer pipeline (appsrc)
 }
 
-static GstFlowReturn onNewColor (GstAppSink *appsink, gpointer userData){
+GstFlowReturn Reciever::onNewColor (GstAppSink *appsink, gpointer userData) {
     Reciever *codelet = reinterpret_cast<Reciever*>(userData);
-    GstMapInfo map;
 
     GstSample *sample;
     g_signal_emit_by_name(appsink, "pull-sample", &sample);
 
-    GstBuffer *buffer = gst_sample_get_buffer(sample);
+
+    // Get image size from caps
     GstCaps *caps = gst_sample_get_caps(sample);
-
-    sensor_msgs::CompressedImage msg;
+    uint caps_size = gst_caps_get_size(caps);
+    gint width, height;
+    for (uint i = 0; i < caps_size; ++i) {
+        GstStructure *s = gst_caps_get_structure(caps, i);
+        gst_structure_get_int(s, "width", &width);
+        gst_structure_get_int(s, "height", &height);
+    };
+    
+    // Get buffer
+    GstMapInfo map;
+    GstBuffer *buffer = gst_sample_get_buffer(sample);
     gst_buffer_map(buffer, &map, GST_MAP_READ);
-    msg.data.resize( map.size );
 
-    memcpy( &msg.data[0], map.data, map.size );
+    // Convert to Isaac SDK ImageProto
+    CpuBufferConstView image_buffer(reinterpret_cast<const byte*>(map.data), map.size);
+    ImageConstView3ub color_image_view(image_buffer, height, width);
+    Image3ub color_image(color_image_view.dimensions());
+    Copy(color_image_view, color_image);
+
+    auto color_image_proto = codelet->tx_color().initProto();
+    color_image_proto.setColorSpace(ColorCameraProto::ColorSpace::RGB);
+    ToProto(std::move(color_image), color_image_proto.initImage(), codelet->tx_color().buffers());
+
+    //memcpy( &msg.data[0], map.data, map.size );
+
+    codelet->tx_color().publish();
 
     gst_buffer_unmap(buffer, &map);
     gst_sample_unref(sample);
-
-    msg.header.stamp = ros::Time::now();
-    server->publish(msg);
 
     return GST_FLOW_OK;
 }
 
-static GstFlowReturn onNewDepth (GstAppSink *appsink, gpointer userData) {
+GstFlowReturn Reciever::onNewDepth (GstAppSink *appsink, gpointer userData) {
     Reciever *codelet = reinterpret_cast<Reciever*>(userData);
-    GstMapInfo map;
-
     GstSample *sample;
     g_signal_emit_by_name(appsink, "pull-sample", &sample);
 
-    GstBuffer *buffer = gst_sample_get_buffer(sample);
+
+    // Get image size from caps
     GstCaps *caps = gst_sample_get_caps(sample);
+    uint caps_size = gst_caps_get_size(caps);
+    gint width, height;
+    for (uint i = 0; i < caps_size; ++i) {
+        GstStructure *s = gst_caps_get_structure(caps, i);
+        gst_structure_get_int(s, "width", &width);
+        gst_structure_get_int(s, "height", &height);
+    };
     
-
-    sensor_msgs::CompressedImage msg;
+    // Get buffer
+    GstMapInfo map;
+    GstBuffer *buffer = gst_sample_get_buffer(sample);
     gst_buffer_map(buffer, &map, GST_MAP_READ);
-    msg.data.resize( map.size );
 
-    memcpy( &msg.data[0], map.data, map.size );
+    // Convert to Isaac SDK ImageProto
+    CpuBufferConstView image_buffer(reinterpret_cast<const byte*>(map.data), map.size);
+    ImageConstView3ub color_image_view(image_buffer, height, width);
+    Image3ub color_image(color_image_view.dimensions());
+    Copy(color_image_view, color_image);
+
+    auto color_image_proto = codelet->tx_depth().initProto();
+    color_image_proto.setColorSpace(ColorCameraProto::ColorSpace::RGB);
+    ToProto(std::move(color_image), color_image_proto.initImage(), codelet->tx_depth().buffers());
+
+    //memcpy( &msg.data[0], map.data, map.size );
+
+    codelet->tx_depth().publish();
 
     gst_buffer_unmap(buffer, &map);
     gst_sample_unref(sample);
-
-    msg.header.stamp = ros::Time::now();
-    server->publish(msg);
 
     return GST_FLOW_OK;
 }
@@ -124,8 +155,8 @@ void Reciever::stop() {
     }
     gst_element_set_state( pipeline, GST_STATE_NULL );
     gst_object_unref( GST_OBJECT ( pipeline ) );
-    gst_object_unref( GST_OBJECT ( appsrc_color ) );
-    gst_object_unref( GST_OBJECT ( appsrc_depth ) );
+    gst_object_unref( GST_OBJECT ( appsink_color ) );
+    gst_object_unref( GST_OBJECT ( appsink_depth ) );
     g_main_loop_unref( loop );
     gst_thread.join();
 }

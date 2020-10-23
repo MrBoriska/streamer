@@ -13,16 +13,34 @@ load("//engine/build:isaac.bzl", "isaac_app", "isaac_cc_module")
 isaac_cc_module(
     name = "streamer",
     srcs = [
-        "Streamer.cpp", "Reciever.cpp",
+        "Streamer.cpp",
     ],
     hdrs = [
-        "Streamer.hpp", "Reciever.hpp",
+        "Streamer.hpp",
     ],
     visibility = ["//visibility:public"],
     deps = [
         "@gstreamer",
         "@glib",
-        "//third_party:opencv",
+        "//engine/core/image",
+        "//engine/core/math",
+        "//engine/core/tensor",
+        "//engine/gems/sight",
+    ],
+)
+
+isaac_cc_module(
+    name = "reciever",
+    srcs = [
+        "Reciever.cpp",
+    ],
+    hdrs = [
+        "Reciever.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@gstreamer",
+        "@glib",
         "//engine/core/image",
         "//engine/core/math",
         "//engine/core/tensor",
