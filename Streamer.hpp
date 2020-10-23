@@ -18,8 +18,24 @@
 #include "messages/camera.hpp"
 #include "messages/math.hpp"
 
+#include <chrono>
+
 namespace isaac {
 namespace streaming {
+
+// high frequency data (position)
+typedef struct {
+
+    // Timestamp
+    std::chrono::system_clock::time_point timestamp;
+    
+    // Translation: [x,y,z]
+    float trans[3];
+
+    // Orientation [w,x,y,z]
+    float quat[4];
+
+} P3D;
 
 class Streamer : public alice::Codelet {
   public:
