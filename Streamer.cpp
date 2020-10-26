@@ -82,8 +82,8 @@ void Streamer::tick() {
     //show("image_depth", [&](sight::Sop& sop) { sop.add(depth_image); });
     
     // Push images into Gstreamer pipeline (appsrc)
-    pushBuffer(GST_APP_SRC_CAST(appsrc_color), color_image);
-    pushBuffer(GST_APP_SRC_CAST(appsrc_depth), depth_image);
+    pushBuffer(GST_APP_SRC_CAST(appsrc_color), color_image, rx_color().pubtime());
+    pushBuffer(GST_APP_SRC_CAST(appsrc_depth), depth_image, rx_depth().pubtime());
 }
 
 void Streamer::setCapsFromImage(GstAppSrc *appsrc, const ImageProto::Reader image_proto) {
@@ -103,7 +103,7 @@ void Streamer::setCapsFromImage(GstAppSrc *appsrc, const ImageProto::Reader imag
     gst_caps_unref( app_caps );
 }
 
-void Streamer::pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image) {
+void Streamer::pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image, uint64_t timestamp) {
     int size = rgb_image.dimensions().prod()*3;
     Image3ub to_gst_image(rgb_image.dimensions());
     Copy(rgb_image, to_gst_image);
@@ -112,6 +112,12 @@ void Streamer::pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image) 
     GstMemory *memory = gst_allocator_alloc(NULL, size, NULL);
     gst_buffer_insert_memory(buffer, -1, memory);
     gst_buffer_fill(buffer, 0, (gpointer)to_gst_image.data().pointer(), size);
+
+    //const auto clock = gst_element_get_clock (GST_ELEMENT(appsrc));
+    //const auto clock_time = gst_clock_get_time (clock);
+    //auto tdiff = GST_CLOCK_DIFF (gst_element_get_base_time (GST_ELEMENT (appsrc)), clock_time);
+    GST_BUFFER_TIMESTAMP(buffer) = timestamp;
+    //gst_object_unref(clock);
 
     if (buffer == NULL) {
         reportFailure("gst_buffer_new_wrapped_full() returned NULL!");
