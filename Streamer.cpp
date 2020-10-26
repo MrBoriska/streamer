@@ -5,6 +5,8 @@
 #include "engine/gems/image/utils.hpp"
 #include "engine/gems/sight/sight.hpp"
 
+#include "gstrealsensemeta.h"
+
 namespace isaac {
 
 namespace streaming {
@@ -112,6 +114,9 @@ void Streamer::pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image) 
     GstMemory *memory = gst_allocator_alloc(NULL, size, NULL);
     gst_buffer_insert_memory(buffer, -1, memory);
     gst_buffer_fill(buffer, 0, (gpointer)to_gst_image.data().pointer(), size);
+
+    // Add metadata
+    gst_buffer_add_realsense_meta(buffer, "model_123", "1234567", 54, "", 5.4);
 
     if (buffer == NULL) {
         reportFailure("gst_buffer_new_wrapped_full() returned NULL!");

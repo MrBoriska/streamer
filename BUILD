@@ -13,10 +13,10 @@ load("//engine/build:isaac.bzl", "isaac_app", "isaac_cc_module")
 isaac_cc_module(
     name = "streamer",
     srcs = [
-        "Streamer.cpp",
+        "Streamer.cpp", "gstrealsensemeta.cpp",
     ],
     hdrs = [
-        "Streamer.hpp",
+        "Streamer.hpp", "gstrealsensemeta.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -26,16 +26,17 @@ isaac_cc_module(
         "//engine/core/math",
         "//engine/core/tensor",
         "//engine/gems/sight",
+        "@realsense",
     ],
 )
 
 isaac_cc_module(
     name = "reciever",
     srcs = [
-        "Reciever.cpp",
+        "Reciever.cpp", "gstrealsensemeta.cpp",
     ],
     hdrs = [
-        "Reciever.hpp",
+        "Reciever.hpp", "gstrealsensemeta.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -45,6 +46,7 @@ isaac_cc_module(
         "//engine/core/math",
         "//engine/core/tensor",
         "//engine/gems/sight",
+        "@realsense",
     ],
 )
 

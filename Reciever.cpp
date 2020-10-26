@@ -5,6 +5,8 @@
 #include "engine/gems/image/utils.hpp"
 #include "engine/gems/sight/sight.hpp"
 
+#include "gstrealsensemeta.h"
+
 namespace isaac {
 
 namespace streaming {
@@ -127,7 +129,16 @@ GstFlowReturn Reciever::onNewDepth (GstAppSink *appsink, gpointer userData) {
     // Get buffer
     GstMapInfo map;
     GstBuffer *buffer = gst_sample_get_buffer(sample);
+
     gst_buffer_map(buffer, &map, GST_MAP_READ);
+
+    // Try get Metadata
+    GstRealsenseMeta *meta = gst_buffer_get_realsense_meta(buffer);
+    if (meta != nullptr)
+        LOG_WARNING("Model: %s\n Serial: %s\n DepthUnits: %f", meta->cam_model, meta->cam_serial_number, meta->depth_units);
+    else
+        LOG_ERROR("Metadata is NULL");
+    
 
     // Convert to Isaac SDK ImageProto
     CpuBufferConstView image_buffer(reinterpret_cast<const byte*>(map.data), map.size);
