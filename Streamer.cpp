@@ -5,6 +5,8 @@
 #include "engine/gems/image/utils.hpp"
 #include "engine/gems/sight/sight.hpp"
 
+#include "gems/colorizer.hpp"
+
 namespace isaac {
 
 namespace streaming {

@@ -1,6 +1,9 @@
 
-#include "engine/core/math/utils.hpp"
-#include "engine/gems/image/color.hpp"
+#pragma once
 
-void ImageF32ToHUEImageCuda(CudaImageConstView1f depth_image, CudaTensorView3ub rgb_result,
+#include "engine/core/image/image.hpp"
+
+namespace isaac {
+void ImageF32ToHUEImageCuda(CudaImageConstView1f depth_image, CudaImageView3ub rgb_result,
                            float min_depth, float max_depth);
+}

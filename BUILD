@@ -9,7 +9,7 @@ license agreement from NVIDIA CORPORATION is strictly prohibited.
 """
 
 load("//engine/build:cc_cuda_library.bzl", "cc_cuda_library")
-load("//engine/build:isaac.bzl", "isaac_app", "isaac_cc_module")
+load("//engine/build:isaac.bzl", "isaac_app", "isaac_cc_module", "isaac_cc_library")
 
 isaac_cc_module(
     name = "streamer",
@@ -21,7 +21,7 @@ isaac_cc_module(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//packages/streamer:cuda_colorizer",
+        "//packages/streamer:colorizer",
         "@gstreamer",
         "@glib",
         "//engine/core/image",
@@ -50,23 +50,36 @@ isaac_cc_module(
     ],
 )
 
-cc_cuda_library(
-    name = "cuda_colorizer",
+isaac_cc_library(
+    name = "colorizer",
     srcs = [
-        "gems/cuda/colorizer.cu.cpp",
         "gems/colorizer.cpp",
     ],
     hdrs = [
-        "gems/cuda/colorizer.cu.hpp",
         "gems/colorizer.hpp",
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//packages/streamer:cuda_colorizer",
         "//engine/core",
         "//engine/core/math",
         "//engine/core/image",
-        "//engine/gems/cuda_utils",
         "//engine/gems/image",
+    ],
+)
+
+cc_cuda_library(
+    name = "cuda_colorizer",
+    srcs = [
+        "gems/cuda/colorizer.cu.cpp",
+    ],
+    hdrs = [
+        "gems/cuda/colorizer.cu.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//engine/core",
+        "//engine/gems/cuda_utils",
         "//third_party:cudart",
     ],
 )
