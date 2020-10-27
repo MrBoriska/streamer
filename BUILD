@@ -21,12 +21,11 @@ isaac_cc_module(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//packages/streamer:colorizer",
+        "//packages/streamer/gems:colorizer",
         "@gstreamer",
         "@glib",
         "//engine/core/image",
         "//engine/core/math",
-        "//engine/core/tensor",
         "//engine/gems/sight",
     ],
 )
@@ -45,42 +44,7 @@ isaac_cc_module(
         "@glib",
         "//engine/core/image",
         "//engine/core/math",
-        "//engine/core/tensor",
         "//engine/gems/sight",
-    ],
-)
-
-isaac_cc_library(
-    name = "colorizer",
-    srcs = [
-        "gems/colorizer.cpp",
-    ],
-    hdrs = [
-        "gems/colorizer.hpp",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//packages/streamer:cuda_colorizer",
-        "//engine/core",
-        "//engine/core/math",
-        "//engine/core/image",
-        "//engine/gems/image",
-    ],
-)
-
-cc_cuda_library(
-    name = "cuda_colorizer",
-    srcs = [
-        "gems/cuda/colorizer.cu.cpp",
-    ],
-    hdrs = [
-        "gems/cuda/colorizer.cu.hpp",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//engine/core",
-        "//engine/gems/cuda_utils",
-        "//third_party:cudart",
     ],
 )
 

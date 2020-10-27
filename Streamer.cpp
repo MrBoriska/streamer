@@ -1,11 +1,10 @@
 #include "Streamer.hpp"
 
 #include "engine/core/logger.hpp"
-#include "engine/gems/image/conversions.hpp"
 #include "engine/gems/image/utils.hpp"
 #include "engine/gems/sight/sight.hpp"
 
-#include "gems/colorizer.hpp"
+#include "packages/streamer/gems/colorizer.hpp"
 
 namespace isaac {
 
@@ -65,7 +64,7 @@ void Streamer::tick() {
     if (isFirstTick()) {
         // Create a caps (capabilities) struct that gets feed into the appsrc structure.
         setCapsFromImage(GST_APP_SRC( appsrc_color ), color_image_proto.getImage());
-        setCapsFromImage(GST_APP_SRC( appsrc_depth ), depth_image_proto.getImage());
+        setCapsFromImage(GST_APP_SRC( appsrc_depth ), depth_image_proto.getDepthImage());
     }
 
     if (!g_main_loop_is_running(loop)) return;
@@ -74,9 +73,16 @@ void Streamer::tick() {
     ImageConstView3ub color_image;
     bool ok = FromProto(color_image_proto.getImage(), rx_color().buffers(), color_image);
     ASSERT(ok, "Failed to deserialize the color image");
-    ImageConstView3ub depth_image;
-    ok = FromProto(depth_image_proto.getImage(), rx_depth().buffers(), depth_image);
+    CudaImageConstView1f cuda_depth_image;
+    ok = FromProto(depth_image_proto.getDepthImage(), rx_depth().buffers(), cuda_depth_image);
     ASSERT(ok, "Failed to deserialize the depth image");
+
+    CudaImage3ub cuda_depth_image_colorized(cuda_depth_image.rows(), cuda_depth_image.cols());
+    ImageF32ToHUEImageCuda(cuda_depth_image, cuda_depth_image_colorized.view(), 0.4, 4.0);
+
+    // todo: need delete in future
+    Image3ub depth_image_colorized(cuda_depth_image_colorized.dimensions());
+    Copy(cuda_depth_image_colorized, depth_image_colorized);
 
     // Show Images in Sight
     show("framerate", 1/getTickDt());
@@ -85,7 +91,7 @@ void Streamer::tick() {
     
     // Push images into Gstreamer pipeline (appsrc)
     pushBuffer(GST_APP_SRC_CAST(appsrc_color), color_image, rx_color().pubtime());
-    pushBuffer(GST_APP_SRC_CAST(appsrc_depth), depth_image, rx_depth().pubtime());
+    pushBuffer(GST_APP_SRC_CAST(appsrc_depth), depth_image_colorized, rx_depth().pubtime());
 }
 
 void Streamer::setCapsFromImage(GstAppSrc *appsrc, const ImageProto::Reader image_proto) {
@@ -106,7 +112,7 @@ void Streamer::setCapsFromImage(GstAppSrc *appsrc, const ImageProto::Reader imag
 }
 
 void Streamer::pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image, uint64_t timestamp) {
-    int size = rgb_image.dimensions().prod()*3;
+    int size = rgb_image.num_elements();
     Image3ub to_gst_image(rgb_image.dimensions());
     Copy(rgb_image, to_gst_image);
 

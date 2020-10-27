@@ -44,7 +44,7 @@ class Streamer : public alice::Codelet {
     void stop() override;
 
     ISAAC_PROTO_RX(ColorCameraProto, color);
-    ISAAC_PROTO_RX(ColorCameraProto, depth);
+    ISAAC_PROTO_RX(DepthCameraProto, depth);
 
     ISAAC_PARAM(std::string, pipeline);
     ISAAC_PARAM(int, framerate, 30);

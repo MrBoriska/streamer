@@ -52,7 +52,7 @@
         "target": "streamer/Streamer/color"
       },
       {
-        "source": "message_generator/CameraGenerator/color_right",
+        "source": "message_generator/CameraGenerator/depth",
         "target": "streamer/Streamer/depth"
       }
     ]
