@@ -15,7 +15,7 @@ void ImageF32ToHUEImageCuda(CudaImageConstView1f depth_image, CudaImageView3ub r
                 min_depth, max_depth, depth_image.cols(), depth_image.rows());
 }
 
-void ImageHUEToF32ImageCuda(CudaImageConstView3ub rgb_image, CudaImageView1f depth_result, float min_depth, float max_depth) {
+void ImageHUEToF32ImageCuda(CudaImageView3ub rgb_image, CudaImageView1f depth_result, float min_depth, float max_depth) {
 
   ISAAC_ASSERT_EQ(rgb_image.rows(), depth_result.rows());
   ISAAC_ASSERT_EQ(rgb_image.cols(), depth_result.cols());
