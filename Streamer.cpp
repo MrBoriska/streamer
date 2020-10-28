@@ -78,7 +78,7 @@ void Streamer::tick() {
     ASSERT(ok, "Failed to deserialize the depth image");
 
     CudaImage3ub cuda_depth_image_colorized(cuda_depth_image.rows(), cuda_depth_image.cols());
-    ImageF32ToHUEImageCuda(cuda_depth_image, cuda_depth_image_colorized.view(), 0.4, 4.0);
+    ImageF32ToHUEImageCuda(cuda_depth_image, cuda_depth_image_colorized.view(), depth_image_proto.getMinDepth(), depth_image_proto.getMaxDepth());
 
     // todo: need delete in future
     Image3ub depth_image_colorized(cuda_depth_image_colorized.dimensions());
@@ -87,7 +87,7 @@ void Streamer::tick() {
     // Show Images in Sight
     show("framerate", 1/getTickDt());
     //show("image_color", [&](sight::Sop& sop) { sop.add(color_image); });
-    //show("image_depth", [&](sight::Sop& sop) { sop.add(depth_image); });
+    //show("image_depth", [&](sight::Sop& sop) { sop.add(depth_image_colorized); });
     
     // Push images into Gstreamer pipeline (appsrc)
     pushBuffer(GST_APP_SRC_CAST(appsrc_color), color_image, rx_color().pubtime());

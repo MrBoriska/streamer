@@ -8,67 +8,60 @@ namespace {
 
 __global__ void ImageF32ToHUEImageImpl(StridePointer<const float> image,
                                        StridePointer<unsigned char> result,
-                                       float min_depth, float max_depth,
+                                       const float min_depth, const float max_depth,
                                        size_t width, size_t height) {
   
   unsigned int col = blockIdx.x * blockDim.x + threadIdx.x;
   unsigned int row = blockIdx.y * blockDim.y + threadIdx.y;
   if (row >= height || col >= width) return;
   
-  char r,g,b;
+  unsigned char R = 0; // RED
+  unsigned char G = 0; // GREEN
+  unsigned char B = 0; // BLUE
 
   float d = image(row,col);
   if (min_depth <= d && d <= max_depth) {
-    char dn = 1529*(d-min_depth)/(max_depth-min_depth);
+    unsigned int dn = 1529.0f*(d-min_depth)/(max_depth-min_depth);
     
-    if (dn >= 0 && dn <= 255 || 1275 < dn && dn <= 1529)
-      r = 255;
-    else if (255 < dn && dn <= 510)
-      r = 255 - dn;
-    else if (510 < dn && dn <= 1020)
-      r = 0;
-    else if (1020 < dn && dn <= 1275)
-      r = dn - 1020;
+    if (dn <= 255 || 1275 < dn && dn <= 1529)  // 0 < dn <= 60 or 300 < dn < 360
+      R = 255;
+    else if (dn <= 510) // 60 < dn <= 120
+      R = 510 - dn;
+    else if (dn <= 1020) // 120 < dn <= 240
+      R = 0;
+    else if (dn <= 1275) // 240 < dn <= 300
+      R = dn - 1020;
     
-    if (0 < dn && dn <= 255)
-      g = dn;
-    else if (255 < dn && dn <= 510)
-      g = 255;
-    else if (510 < dn && dn <= 765)
-      g = 765 - dn;
-    else if (765 < dn && dn <= 1529)
-      g = 0;
+    if (dn <= 255) // 0 < dn <= 60
+      G = dn;
+    else if (dn <= 765) // 60 < dn <= 180
+      G = 255;
+    else if (dn <= 1020) // 180 < dn <= 240
+      G = 765 - dn;
+    else if (dn <= 1529) // 180 < dn <= 360
+      G = 0;
     
-    if (0 < dn && dn <= 765)
-      b = 0;
-    else if (765 < dn && dn <= 1020)
-      b = dn - 765;
-    else if (1020 < dn && dn <= 1275)
-      b = 255;
-    else if (1275 < dn && dn <= 1529)
-      b = 1275 - dn;
+    if (dn <= 510) // 0 < dn <= 120
+      B = 0;
+    else if (dn <= 765) // 120 < dn <= 180
+      B = dn - 510;
+    else if (dn <= 1275) // 180 < dn <= 300
+      B = 255;
+    else if (dn <= 1529) // 300 < dn <= 360
+      B = 1529 - dn;
     
-  } else {
-    r = 0;
-    g = 0;
-    b = 0;
   }
   
-  result(row, 3*col) = r;
-  result(row, 3*col+1) = g;
-  result(row, 3*col+2) = b;
-
-  //unsigned char* data = result.row_pointer(row) + 3 * col;
-  //data[0] = r;
-  //data[1] = g;
-  //data[2] = b;
+  result(row, 3*col) = R;
+  result(row, 3*col+1) = G;
+  result(row, 3*col+2) = B;
 }
 
 }  // namespace
 
 void ImageF32ToHUEImage(StridePointer<const float> image,
                         StridePointer<unsigned char> result,
-                        float min_depth, float max_depth,
+                        const float min_depth, const float max_depth,
                         size_t width, size_t height) {
   // Split work into 16 by 16 grids across the images.
   dim3 block(16, 16);
