@@ -40,6 +40,7 @@ isaac_cc_module(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//packages/streamer/gems:colorizer",
         "@gstreamer",
         "@glib",
         "//engine/core/image",
