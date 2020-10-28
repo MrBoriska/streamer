@@ -8,7 +8,8 @@ distribution of this software and related documentation without an express
 license agreement from NVIDIA CORPORATION is strictly prohibited.
 """
 
-load("//engine/build:isaac.bzl", "isaac_app", "isaac_cc_module")
+load("//engine/build:cc_cuda_library.bzl", "cc_cuda_library")
+load("//engine/build:isaac.bzl", "isaac_app", "isaac_cc_module", "isaac_cc_library")
 
 isaac_cc_module(
     name = "streamer",
@@ -20,12 +21,29 @@ isaac_cc_module(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//packages/streamer/gems:colorizer",
         "@gstreamer",
         "@glib",
-        "//third_party:opencv",
         "//engine/core/image",
         "//engine/core/math",
-        "//engine/core/tensor",
+        "//engine/gems/sight",
+    ],
+)
+
+isaac_cc_module(
+    name = "reciever",
+    srcs = [
+        "Reciever.cpp",
+    ],
+    hdrs = [
+        "Reciever.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@gstreamer",
+        "@glib",
+        "//engine/core/image",
+        "//engine/core/math",
         "//engine/gems/sight",
     ],
 )
