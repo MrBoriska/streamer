@@ -73,7 +73,7 @@ __global__ void ImageHUEToF32ImageImpl(StridePointer<const unsigned char> image,
 
   float dn = 0;
 
-  if (B + G + R < 255) {
+  if (B + G + R < 128) { // must be 255, but 128 for stability
 		dn = 0;
 	} else if (R >= G && R >= B) { // {0, 60} or {300, 360}
 		if (G >= B) {	// {0, 60}
