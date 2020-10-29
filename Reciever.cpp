@@ -133,6 +133,8 @@ GstFlowReturn Reciever::onNewDepth (GstAppSink *appsink, gpointer userData) {
     CpuBufferConstView image_buffer(reinterpret_cast<const byte*>(map.data), map.size);
     ImageConstView3ub color_image_view(image_buffer, height, width);
 
+    codelet->show("image_depth_colorized", [&](sight::Sop& sop) { sop.add(color_image_view); });
+
     CudaImage3ub cuda_depth_colorized(height, width);
     Copy(color_image_view, cuda_depth_colorized);
 

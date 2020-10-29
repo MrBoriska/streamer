@@ -75,15 +75,15 @@ __global__ void ImageHUEToF32ImageImpl(StridePointer<const unsigned char> image,
 
   if (B + G + R < 255) {
 		dn = 0;
-	} else if (R >= G && R >= B) {
-		if (G >= B) {	
+	} else if (R >= G && R >= B) { // {0, 60} or {300, 360}
+		if (G >= B) {	// {0, 60}
 			dn = G - B;
-		} else {
+		} else { // {300, 360}
 			dn = (G - B) + 1529;
 		}
-	} else if (G >= R && G >= B) {
+	} else if (G >= R && G >= B) { // {60, 180}
 		dn = B - R + 510;
-	} else if (B >= G && B >= R) {
+	} else if (B >= G && B >= R) { // {180, 300}
 		dn = R - G + 1020;
 	}
   
