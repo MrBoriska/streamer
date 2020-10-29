@@ -57,6 +57,39 @@ __global__ void ImageF32ToHUEImageImpl(StridePointer<const float> image,
   result(row, 3*col+2) = B;
 }
 
+__global__ void ImageHUEToF32ImageImpl(StridePointer<const unsigned char> image,
+                                       StridePointer<float> result,
+                                       const float min_depth, const float max_depth,
+                                       size_t width, size_t height) {
+  
+
+  unsigned int col = blockIdx.x * blockDim.x + threadIdx.x;
+  unsigned int row = blockIdx.y * blockDim.y + threadIdx.y;
+  if (row >= height || col >= width) return;
+
+  unsigned char R = image(row, 3*col);   // RED
+  unsigned char G = image(row, 3*col+1); // GREEN
+  unsigned char B = image(row, 3*col+2); // BLUE
+
+  float dn = 0;
+
+  if (B + G + R < 128) { // must be 255, but 128 for stability
+		dn = 0;
+	} else if (R >= G && R >= B) { // {0, 60} or {300, 360}
+		if (G >= B) {	// {0, 60}
+			dn = G - B;
+		} else { // {300, 360}
+			dn = (G - B) + 1529;
+		}
+	} else if (G >= R && G >= B) { // {60, 180}
+		dn = B - R + 510;
+	} else if (B >= G && B >= R) { // {180, 300}
+		dn = R - G + 1020;
+	}
+  
+  result(row, col) = min_depth + (max_depth-min_depth)*dn/1529.0f;
+}
+
 }  // namespace
 
 void ImageF32ToHUEImage(StridePointer<const float> image,
@@ -67,6 +100,16 @@ void ImageF32ToHUEImage(StridePointer<const float> image,
   dim3 block(16, 16);
   dim3 grid((width + block.x - 1) / block.x, (height + block.y - 1) / block.y);
   ImageF32ToHUEImageImpl<<<grid, block>>>(image, result, min_depth, max_depth, width, height);
+}
+
+void ImageHUEToF32Image(StridePointer<const unsigned char> image,
+                        StridePointer<float> result,
+                        float min_depth, float max_depth,
+                        size_t width, size_t height) {
+  dim3 block(16, 16);
+  dim3 grid((width + block.x - 1) / block.x, (height + block.y - 1) / block.y);
+  ImageHUEToF32ImageImpl<<<grid, block>>>(image, result, min_depth, max_depth, width, height);
+  
 }
 
 }  // namespace isaac

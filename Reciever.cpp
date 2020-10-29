@@ -1,9 +1,10 @@
 #include "Reciever.hpp"
 
 #include "engine/core/logger.hpp"
-#include "engine/gems/image/conversions.hpp"
 #include "engine/gems/image/utils.hpp"
 #include "engine/gems/sight/sight.hpp"
+
+#include "packages/streamer/gems/colorizer.hpp"
 
 namespace isaac {
 
@@ -113,7 +114,6 @@ GstFlowReturn Reciever::onNewDepth (GstAppSink *appsink, gpointer userData) {
     GstSample *sample;
     g_signal_emit_by_name(appsink, "pull-sample", &sample);
 
-
     // Get image size from caps
     GstCaps *caps = gst_sample_get_caps(sample);
     uint caps_size = gst_caps_get_size(caps);
@@ -132,12 +132,22 @@ GstFlowReturn Reciever::onNewDepth (GstAppSink *appsink, gpointer userData) {
     // Convert to Isaac SDK ImageProto
     CpuBufferConstView image_buffer(reinterpret_cast<const byte*>(map.data), map.size);
     ImageConstView3ub color_image_view(image_buffer, height, width);
-    Image3ub color_image(color_image_view.dimensions());
-    Copy(color_image_view, color_image);
 
-    auto color_image_proto = codelet->tx_depth().initProto();
-    color_image_proto.setColorSpace(ColorCameraProto::ColorSpace::RGB);
-    ToProto(std::move(color_image), color_image_proto.initImage(), codelet->tx_depth().buffers());
+    codelet->show("image_depth_colorized", [&](sight::Sop& sop) { sop.add(color_image_view); });
+
+    CudaImage3ub cuda_depth_colorized(height, width);
+    Copy(color_image_view, cuda_depth_colorized);
+
+    CudaImage1f cuda_depth_image(cuda_depth_colorized.rows(), cuda_depth_colorized.cols());
+    ImageHUEToF32ImageCuda(cuda_depth_colorized.view(), cuda_depth_image.view(), 0.4, 4.0);
+
+    //Image1f depth_image(cuda_depth_image.dimensions());
+    //Copy(cuda_depth_image, depth_image);
+
+    auto depth_image_proto = codelet->tx_depth().initProto();
+    depth_image_proto.setMinDepth(0.4);
+    depth_image_proto.setMaxDepth(4.0);
+    ToProto(std::move(cuda_depth_image), depth_image_proto.initDepthImage(), codelet->tx_depth().buffers());
 
     //memcpy( &msg.data[0], map.data, map.size );
 

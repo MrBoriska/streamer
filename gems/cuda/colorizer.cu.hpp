@@ -10,4 +10,11 @@ void ImageF32ToHUEImage(StridePointer<const float> image,
                         float min_depth, float max_depth,
                         size_t width, size_t height);
 
+
+// Converts a 3-channel 8-bit HUE image to a 1-channel 32-bit floating point depth image.
+void ImageHUEToF32Image(StridePointer<const unsigned char> image,
+                        StridePointer<float> result,
+                        float min_depth, float max_depth,
+                        size_t width, size_t height);
+
 }  // namespace isaac

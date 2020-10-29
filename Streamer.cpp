@@ -80,6 +80,17 @@ void Streamer::tick() {
     CudaImage3ub cuda_depth_image_colorized(cuda_depth_image.rows(), cuda_depth_image.cols());
     ImageF32ToHUEImageCuda(cuda_depth_image, cuda_depth_image_colorized.view(), depth_image_proto.getMinDepth(), depth_image_proto.getMaxDepth());
 
+    /*
+    CudaImage1f cuda_depth_image_debug(cuda_depth_image_colorized.dimensions());
+    ImageHUEToF32ImageCuda(cuda_depth_image_colorized.view(), cuda_depth_image_debug.view(), 0.4, 4.0);
+
+    auto depth_image_debug_proto = tx_depth_debug().initProto();
+    depth_image_debug_proto.setMinDepth(0.4);
+    depth_image_debug_proto.setMaxDepth(4.0);
+    ToProto(std::move(cuda_depth_image_debug), depth_image_debug_proto.initDepthImage(), tx_depth_debug().buffers());
+    tx_depth_debug().publish();
+    */
+
     // todo: need delete in future
     Image3ub depth_image_colorized(cuda_depth_image_colorized.dimensions());
     Copy(cuda_depth_image_colorized, depth_image_colorized);
