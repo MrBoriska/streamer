@@ -1,10 +1,10 @@
 #include "Streamer.hpp"
 
 #include "engine/core/logger.hpp"
-#include "engine/gems/image/conversions.hpp"
 #include "engine/gems/image/utils.hpp"
 #include "engine/gems/sight/sight.hpp"
 
+#include "packages/streamer/gems/colorizer.hpp"
 #include "gstrealsensemeta.h"
 
 namespace isaac {
@@ -65,7 +65,7 @@ void Streamer::tick() {
     if (isFirstTick()) {
         // Create a caps (capabilities) struct that gets feed into the appsrc structure.
         setCapsFromImage(GST_APP_SRC( appsrc_color ), color_image_proto.getImage());
-        setCapsFromImage(GST_APP_SRC( appsrc_depth ), depth_image_proto.getImage());
+        setCapsFromImage(GST_APP_SRC( appsrc_depth ), depth_image_proto.getDepthImage());
     }
 
     if (!g_main_loop_is_running(loop)) return;
@@ -74,18 +74,36 @@ void Streamer::tick() {
     ImageConstView3ub color_image;
     bool ok = FromProto(color_image_proto.getImage(), rx_color().buffers(), color_image);
     ASSERT(ok, "Failed to deserialize the color image");
-    ImageConstView3ub depth_image;
-    ok = FromProto(depth_image_proto.getImage(), rx_depth().buffers(), depth_image);
+    CudaImageConstView1f cuda_depth_image;
+    ok = FromProto(depth_image_proto.getDepthImage(), rx_depth().buffers(), cuda_depth_image);
     ASSERT(ok, "Failed to deserialize the depth image");
+
+    CudaImage3ub cuda_depth_image_colorized(cuda_depth_image.rows(), cuda_depth_image.cols());
+    ImageF32ToHUEImageCuda(cuda_depth_image, cuda_depth_image_colorized.view(), depth_image_proto.getMinDepth(), depth_image_proto.getMaxDepth());
+
+    /*
+    CudaImage1f cuda_depth_image_debug(cuda_depth_image_colorized.dimensions());
+    ImageHUEToF32ImageCuda(cuda_depth_image_colorized.view(), cuda_depth_image_debug.view(), 0.4, 4.0);
+
+    auto depth_image_debug_proto = tx_depth_debug().initProto();
+    depth_image_debug_proto.setMinDepth(0.4);
+    depth_image_debug_proto.setMaxDepth(4.0);
+    ToProto(std::move(cuda_depth_image_debug), depth_image_debug_proto.initDepthImage(), tx_depth_debug().buffers());
+    tx_depth_debug().publish();
+    */
+
+    // todo: need delete in future
+    Image3ub depth_image_colorized(cuda_depth_image_colorized.dimensions());
+    Copy(cuda_depth_image_colorized, depth_image_colorized);
 
     // Show Images in Sight
     show("framerate", 1/getTickDt());
     //show("image_color", [&](sight::Sop& sop) { sop.add(color_image); });
-    //show("image_depth", [&](sight::Sop& sop) { sop.add(depth_image); });
+    //show("image_depth", [&](sight::Sop& sop) { sop.add(depth_image_colorized); });
     
     // Push images into Gstreamer pipeline (appsrc)
-    pushBuffer(GST_APP_SRC_CAST(appsrc_color), color_image);
-    pushBuffer(GST_APP_SRC_CAST(appsrc_depth), depth_image);
+    pushBuffer(GST_APP_SRC_CAST(appsrc_color), color_image, rx_color().pubtime());
+    pushBuffer(GST_APP_SRC_CAST(appsrc_depth), depth_image_colorized, rx_depth().pubtime());
 }
 
 void Streamer::setCapsFromImage(GstAppSrc *appsrc, const ImageProto::Reader image_proto) {
@@ -105,8 +123,8 @@ void Streamer::setCapsFromImage(GstAppSrc *appsrc, const ImageProto::Reader imag
     gst_caps_unref( app_caps );
 }
 
-void Streamer::pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image) {
-    int size = rgb_image.dimensions().prod()*3;
+void Streamer::pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image, uint64_t timestamp) {
+    int size = rgb_image.num_elements();
     Image3ub to_gst_image(rgb_image.dimensions());
     Copy(rgb_image, to_gst_image);
 
@@ -117,6 +135,12 @@ void Streamer::pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image) 
 
     // Add metadata
     gst_buffer_add_realsense_meta(buffer, "model_123", "1234567", 54, "", 5.4);
+
+    //const auto clock = gst_element_get_clock (GST_ELEMENT(appsrc));
+    //const auto clock_time = gst_clock_get_time (clock);
+    //auto tdiff = GST_CLOCK_DIFF (gst_element_get_base_time (GST_ELEMENT (appsrc)), clock_time);
+    GST_BUFFER_TIMESTAMP(buffer) = timestamp;
+    //gst_object_unref(clock);
 
     if (buffer == NULL) {
         reportFailure("gst_buffer_new_wrapped_full() returned NULL!");

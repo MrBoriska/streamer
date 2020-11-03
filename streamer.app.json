@@ -52,7 +52,7 @@
         "target": "streamer/Streamer/color"
       },
       {
-        "source": "message_generator/CameraGenerator/color_right",
+        "source": "message_generator/CameraGenerator/depth",
         "target": "streamer/Streamer/depth"
       }
     ]
@@ -67,13 +67,12 @@
     },
     "streamer" : {
       "Streamer" : {
-        "pipeline" : "appsrc name=depth ! videoconvert ! rtpvrawpay ! udpsink host=127.0.0.1 port=5000 appsrc name=color ! videoconvert ! rtpvrawpay ! udpsink host=127.0.0.1 port=5001"
+        "pipeline" : "appsrc name=depth ! videoconvert ! video/x-raw,format=I420 ! nvvidconv output-buffers=10 ! video/x-raw(memory:NVMM),format=NV12 ! m.sink_0 appsrc name=color ! videoconvert ! video/x-raw,format=I420 ! nvvidconv output-buffers=10 ! video/x-raw(memory:NVMM),format=NV12 ! m.sink_1 nvcompositor name=m start-time-selection=1 sink_0::xpos=0 sink_0::ypos=0 sink_1::xpos=0 sink_1::ypos=720 sink_0::width=1280 sink_0::height=720 sink_1::width=1280 sink_1::height=720 ! nvvidconv ! video/x-raw(memory:NVMM),format=NV12 ! omxh264enc ! video/x-h264,stream-format=byte-stream ! rtph264pay pt=96 ! udpsink host=192.168.9.100 port=5000"
       }
     },
     "reciever" : {
       "Reciever" : {
-        "pipeline" : "udpsrc port=5000 caps = \"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)RAW, sampling=(string)YCbCr-4:2:0, depth=(string)8, width=(string)320, height=(string)240, colorimetry=(string)BT601-5, payload=(int)96\" ! rtpvrawdepay ! videoconvert ! appsink name=depth
-                      udpsrc port=5001 caps = \"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)RAW, sampling=(string)YCbCr-4:2:0, depth=(string)8, width=(string)320, height=(string)240, colorimetry=(string)BT601-5, payload=(int)96\" ! rtpvrawdepay ! videoconvert ! appsink name=color"
+        "pipeline" : "udpsrc port=5000 caps = \"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)RAW, sampling=(string)YCbCr-4:2:0, depth=(string)8, width=(string)320, height=(string)240, colorimetry=(string)BT601-5, payload=(int)96\" ! rtpvrawdepay ! videoconvert ! appsink name=depth"
       }
     }
   }
