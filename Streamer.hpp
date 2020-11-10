@@ -45,12 +45,15 @@ class Streamer : public alice::Codelet {
 
     ISAAC_PROTO_RX(ColorCameraProto, color);
     ISAAC_PROTO_RX(DepthCameraProto, depth);
+    ISAAC_PROTO_RX(Pose3dProto, pose);
     //ISAAC_PROTO_TX(DepthCameraProto, depth_debug);
 
     ISAAC_PARAM(std::string, pipeline);
     ISAAC_PARAM(int, framerate, 30);
 
     void setCapsFromImage(GstAppSrc *appsrc, const ImageProto::Reader image_proto);
+    // Creating a new klv buffer and send to the gstreamer pipeline
+    void pushKLVBuffer(GstAppSrc *appsrc, Pose3dProto::Reader pose_proto, uint64_t timestamp);
     // Creating a new buffer and to send to the gstreamer pipeline
     void pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image, uint64_t timestamp);
 
@@ -61,6 +64,7 @@ class Streamer : public alice::Codelet {
     GstElement	*pipeline	    = NULL;		// GStreamers pipeline for data flow
     GstElement	*appsrc_color   = NULL;		// Used to inject buffers into a pipeline
     GstElement	*appsrc_depth	= NULL;		// Used to inject buffers into a pipeline
+    GstElement	*appsrc_data	= NULL;  // Used to inject buffers into a pipeline
     GError 		*error 		    = NULL;		// Holds error message if generated
 };
 }  // namespace streaming

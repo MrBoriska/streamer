@@ -35,10 +35,12 @@ void Streamer::start() {
 
     appsrc_color		= gst_bin_get_by_name( GST_BIN( pipeline ), "color" );
     appsrc_depth		= gst_bin_get_by_name( GST_BIN( pipeline ), "depth" );
+    appsrc_data		= gst_bin_get_by_name( GST_BIN( pipeline ), "data" );
 
     // Set a few properties on the appsrc Element
     g_object_set( G_OBJECT( appsrc_color ), "is-live", TRUE, "format", GST_FORMAT_TIME, NULL );
     g_object_set( G_OBJECT( appsrc_depth ), "is-live", TRUE, "format", GST_FORMAT_TIME, NULL );
+    g_object_set( G_OBJECT( appsrc_data ), "is-live", TRUE, "format", GST_FORMAT_TIME, NULL );
 
     // play
     gst_element_set_state( pipeline, GST_STATE_PLAYING );
@@ -104,6 +106,9 @@ void Streamer::tick() {
     // Push images into Gstreamer pipeline (appsrc)
     pushBuffer(GST_APP_SRC_CAST(appsrc_color), color_image, rx_color().pubtime());
     pushBuffer(GST_APP_SRC_CAST(appsrc_depth), depth_image_colorized, rx_depth().pubtime());
+    if (rx_pose().available()) {
+        pushKLVBuffer(GST_APP_SRC_CAST(appsrc_data), rx_pose().getProto(), rx_pose().pubtime());
+    }
 }
 
 void Streamer::setCapsFromImage(GstAppSrc *appsrc, const ImageProto::Reader image_proto) {
@@ -123,6 +128,50 @@ void Streamer::setCapsFromImage(GstAppSrc *appsrc, const ImageProto::Reader imag
     gst_caps_unref( app_caps );
 }
 
+void Streamer::pushKLVBuffer(GstAppSrc *appsrc, Pose3dProto::Reader pose_proto, uint64_t timestamp) {
+    
+    // Set Caps
+    GstCaps *app_caps = gst_caps_new_simple("meta/x-klv", "parsed", TRUE, NULL);
+
+    // This is going to specify the capabilities of the appsrc.
+    gst_app_src_set_caps(appsrc, app_caps);
+
+    // Don't need it anymore, un ref it so the memory can be removed.
+    gst_caps_unref( app_caps );
+
+    // Prepare data
+    auto q = pose_proto.getRotation().getQ();
+    auto t = pose_proto.getTranslation();
+
+    P3D data;
+    data.quat[0] = q.getW();
+    data.quat[1] = q.getX();
+    data.quat[2] = q.getY();
+    data.quat[3] = q.getZ();
+    data.trans[0] = t.getX();
+    data.trans[1] = t.getY();
+    data.trans[2] = t.getZ();
+    
+    // Create Buffer
+    gsize size = sizeof(data);
+    GstBuffer *buffer = gst_buffer_new();
+    GstMemory *memory = gst_allocator_alloc(NULL, size, NULL);
+    gst_buffer_insert_memory(buffer, -1, memory);
+    gst_buffer_fill(buffer, 0, (gpointer)(&data), size);
+
+    GST_BUFFER_TIMESTAMP(buffer) = timestamp;
+
+    if (buffer == NULL) {
+        reportFailure("gst_buffer_new_wrapped_full() returned NULL!");
+    } else {
+        // push buffer
+        GstFlowReturn ret = gst_app_src_push_buffer(appsrc, buffer);
+        if (ret < 0) {
+            reportFailure("gst_app_src_push_buffer() returned error!");
+        }
+    }
+}
+
 void Streamer::pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image, uint64_t timestamp) {
     int size = rgb_image.num_elements();
     Image3ub to_gst_image(rgb_image.dimensions());
@@ -134,13 +183,9 @@ void Streamer::pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image, 
     gst_buffer_fill(buffer, 0, (gpointer)to_gst_image.data().pointer(), size);
 
     // Add metadata
-    gst_buffer_add_realsense_meta(buffer, "model_123", "1234567", 54, "", 5.4);
+    //gst_buffer_add_realsense_meta(buffer, "model_123", "1234567", 54, "", 5.4);
 
-    //const auto clock = gst_element_get_clock (GST_ELEMENT(appsrc));
-    //const auto clock_time = gst_clock_get_time (clock);
-    //auto tdiff = GST_CLOCK_DIFF (gst_element_get_base_time (GST_ELEMENT (appsrc)), clock_time);
     GST_BUFFER_TIMESTAMP(buffer) = timestamp;
-    //gst_object_unref(clock);
 
     if (buffer == NULL) {
         reportFailure("gst_buffer_new_wrapped_full() returned NULL!");
