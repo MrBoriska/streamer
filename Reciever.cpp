@@ -5,7 +5,7 @@
 #include "engine/gems/sight/sight.hpp"
 
 #include "packages/streamer/gems/colorizer.hpp"
-#include "gstrealsensemeta.h"
+//#include "gstrealsensemeta.h"
 
 namespace isaac {
 
@@ -35,12 +35,15 @@ void Reciever::start() {
 
     appsink_color		= gst_bin_get_by_name( GST_BIN( pipeline ), "color" );
     appsink_depth		= gst_bin_get_by_name( GST_BIN( pipeline ), "depth" );
+    appsink_data		= gst_bin_get_by_name( GST_BIN( pipeline ), "data" );
 
     // Set a few properties on the appsrc Element
     g_object_set(G_OBJECT(appsink_depth), "emit-signals", true, "max-buffers", 1, NULL);
     g_object_set(G_OBJECT(appsink_color), "emit-signals", true, "max-buffers", 1, NULL);
+    g_object_set(G_OBJECT(appsink_data), "emit-signals", true, "max-buffers", 1, NULL);
     g_signal_connect(G_OBJECT(appsink_depth), "new-sample", G_CALLBACK(onNewDepth), this);
     g_signal_connect(G_OBJECT(appsink_color), "new-sample", G_CALLBACK(onNewColor), this);
+    g_signal_connect(G_OBJECT(appsink_data), "new-sample", G_CALLBACK(onNewData), this);
 
     // play
     gst_element_set_state( pipeline, GST_STATE_PLAYING );
@@ -131,14 +134,6 @@ GstFlowReturn Reciever::onNewDepth (GstAppSink *appsink, gpointer userData) {
 
     gst_buffer_map(buffer, &map, GST_MAP_READ);
 
-    // Try get Metadata
-    GstRealsenseMeta *meta = gst_buffer_get_realsense_meta(buffer);
-    if (meta != nullptr)
-        LOG_WARNING("Model: %s\n Serial: %s\n DepthUnits: %f", meta->cam_model, meta->cam_serial_number, meta->depth_units);
-    else
-        LOG_ERROR("Metadata is NULL");
-    
-
     // Convert to Isaac SDK ImageProto
     CpuBufferConstView image_buffer(reinterpret_cast<const byte*>(map.data), map.size);
     ImageConstView3ub color_image_view(image_buffer, height, width);
@@ -167,6 +162,39 @@ GstFlowReturn Reciever::onNewDepth (GstAppSink *appsink, gpointer userData) {
     gst_sample_unref(sample);
 
     return GST_FLOW_OK;
+}
+
+
+GstFlowReturn Reciever::onNewData (GstAppSink *appsink, gpointer userData) {
+    Reciever *codelet = reinterpret_cast<Reciever*>(userData);
+    GstSample *sample;
+    g_signal_emit_by_name(appsink, "pull-sample", &sample);
+
+    // Get buffer
+    GstMapInfo map;
+    GstBuffer *buffer = gst_sample_get_buffer(sample);
+
+    gst_buffer_map(buffer, &map, GST_MAP_READ);
+
+    // Convert to Isaac SDK ImageProto
+    P3D* poseptr = reinterpret_cast<P3D*>(map.data);
+
+    codelet->show("quat.w", poseptr->quat[0]);
+    codelet->show("quat.x", poseptr->quat[1]);
+    codelet->show("quat.y", poseptr->quat[2]);
+    codelet->show("quat.z", poseptr->quat[3]);
+    codelet->show("trans.x", poseptr->trans[0]);
+    codelet->show("trans.y", poseptr->trans[1]);
+    codelet->show("trans.z", poseptr->trans[2]);
+
+    //codelet->tx_depth().publish();
+
+    gst_buffer_unmap(buffer, &map);
+    gst_sample_unref(sample);
+
+    return GST_FLOW_OK;
+
+
 }
 
 void Reciever::stop() {

@@ -59,6 +59,7 @@ class Reciever : public alice::Codelet {
     static gboolean gstError(GstBus *bus, GstMessage *message, gpointer userData);
     static GstFlowReturn onNewColor(GstAppSink *appsink, gpointer userData);
     static GstFlowReturn onNewDepth(GstAppSink *appsink, gpointer userData);
+    static GstFlowReturn onNewData(GstAppSink *appsink, gpointer userData);
 
 
     std::thread gst_thread;
@@ -66,6 +67,7 @@ class Reciever : public alice::Codelet {
     GstElement	*pipeline	    = NULL;		// GStreamers pipeline for data flow
     GstElement	*appsink_color   = NULL;		// Used to inject buffers into a pipeline
     GstElement	*appsink_depth	= NULL;		// Used to inject buffers into a pipeline
+    GstElement	*appsink_data	= NULL;		// Used to inject buffers into a pipeline
     GError 		*error 		    = NULL;		// Holds error message if generated
 };
 }  // namespace streaming

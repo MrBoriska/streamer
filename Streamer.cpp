@@ -5,7 +5,7 @@
 #include "engine/gems/sight/sight.hpp"
 
 #include "packages/streamer/gems/colorizer.hpp"
-#include "gstrealsensemeta.h"
+//#include "gstrealsensemeta.h"
 
 namespace isaac {
 
@@ -35,7 +35,12 @@ void Streamer::start() {
 
     appsrc_color		= gst_bin_get_by_name( GST_BIN( pipeline ), "color" );
     appsrc_depth		= gst_bin_get_by_name( GST_BIN( pipeline ), "depth" );
-    appsrc_data		= gst_bin_get_by_name( GST_BIN( pipeline ), "data" );
+    appsrc_data		    = gst_bin_get_by_name( GST_BIN( pipeline ), "data" );
+
+    // Set Caps to data appsrc
+    GstCaps *app_caps = gst_caps_new_simple("meta/x-klv", "parsed", G_TYPE_BOOLEAN, TRUE, NULL);
+    gst_app_src_set_caps(GST_APP_SRC_CAST(appsrc_data), app_caps);
+    gst_caps_unref(app_caps);
 
     // Set a few properties on the appsrc Element
     g_object_set( G_OBJECT( appsrc_color ), "is-live", TRUE, "format", GST_FORMAT_TIME, NULL );
@@ -56,11 +61,11 @@ void Streamer::start() {
 
     // Sync by timestamps
     synchronize(rx_color(), rx_depth());
-    tickOnMessage(rx_depth());
+    tickOnMessage(rx_color());
 }
 
 void Streamer::tick() {
-
+    
     auto color_image_proto = rx_color().getProto();
     auto depth_image_proto = rx_depth().getProto();
 
@@ -106,8 +111,10 @@ void Streamer::tick() {
     // Push images into Gstreamer pipeline (appsrc)
     pushBuffer(GST_APP_SRC_CAST(appsrc_color), color_image, rx_color().pubtime());
     pushBuffer(GST_APP_SRC_CAST(appsrc_depth), depth_image_colorized, rx_depth().pubtime());
-    if (rx_pose().available()) {
-        pushKLVBuffer(GST_APP_SRC_CAST(appsrc_data), rx_pose().getProto(), rx_pose().pubtime());
+    
+    if (rx_frame_position().available()) {
+        auto pos_proto = rx_frame_position().getProto();
+        pushKLVBuffer(GST_APP_SRC_CAST(appsrc_data), pos_proto, rx_frame_position().pubtime());
     }
 }
 
@@ -130,15 +137,6 @@ void Streamer::setCapsFromImage(GstAppSrc *appsrc, const ImageProto::Reader imag
 
 void Streamer::pushKLVBuffer(GstAppSrc *appsrc, Pose3dProto::Reader pose_proto, uint64_t timestamp) {
     
-    // Set Caps
-    GstCaps *app_caps = gst_caps_new_simple("meta/x-klv", "parsed", TRUE, NULL);
-
-    // This is going to specify the capabilities of the appsrc.
-    gst_app_src_set_caps(appsrc, app_caps);
-
-    // Don't need it anymore, un ref it so the memory can be removed.
-    gst_caps_unref( app_caps );
-
     // Prepare data
     auto q = pose_proto.getRotation().getQ();
     auto t = pose_proto.getTranslation();
@@ -153,14 +151,16 @@ void Streamer::pushKLVBuffer(GstAppSrc *appsrc, Pose3dProto::Reader pose_proto, 
     data.trans[2] = t.getZ();
     
     // Create Buffer
-    gsize size = sizeof(data);
+    gsize size = sizeof(P3D);
     GstBuffer *buffer = gst_buffer_new();
     GstMemory *memory = gst_allocator_alloc(NULL, size, NULL);
     gst_buffer_insert_memory(buffer, -1, memory);
     gst_buffer_fill(buffer, 0, (gpointer)(&data), size);
 
+    // Set Timestamp
     GST_BUFFER_TIMESTAMP(buffer) = timestamp;
 
+    // Push buffer
     if (buffer == NULL) {
         reportFailure("gst_buffer_new_wrapped_full() returned NULL!");
     } else {
