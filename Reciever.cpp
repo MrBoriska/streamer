@@ -27,6 +27,7 @@ void Reciever::start() {
         reportFailure("GStreamer: %s", error->message);
         return;
     }
+    gst_pipeline_set_latency(GST_PIPELINE(pipeline), guint(20));
 
     GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
     gst_bus_add_signal_watch(bus);

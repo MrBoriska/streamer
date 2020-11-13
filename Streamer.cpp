@@ -28,6 +28,8 @@ void Streamer::start() {
         return;
     }
 
+    gst_pipeline_set_latency(GST_PIPELINE(pipeline), guint(20));
+    
     GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
     gst_bus_add_signal_watch(bus);
     g_signal_connect(bus, "message::error", G_CALLBACK(gstError), this);
