@@ -27,7 +27,7 @@ void Streamer::start() {
         reportFailure("GStreamer: %s", error->message);
         return;
     }
-
+    
     gst_pipeline_set_latency(GST_PIPELINE(pipeline), guint(20));
     
     GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
@@ -144,6 +144,7 @@ void Streamer::pushKLVBuffer(GstAppSrc *appsrc, Pose3dProto::Reader pose_proto, 
     auto t = pose_proto.getTranslation();
 
     P3D data;
+    data.timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>()+std::chrono::nanoseconds(timestamp);
     data.quat[0] = q.getW();
     data.quat[1] = q.getX();
     data.quat[2] = q.getY();
@@ -183,9 +184,6 @@ void Streamer::pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image, 
     GstMemory *memory = gst_allocator_alloc(NULL, size, NULL);
     gst_buffer_insert_memory(buffer, -1, memory);
     gst_buffer_fill(buffer, 0, (gpointer)to_gst_image.data().pointer(), size);
-
-    // Add metadata
-    //gst_buffer_add_realsense_meta(buffer, "model_123", "1234567", 54, "", 5.4);
 
     GST_BUFFER_TIMESTAMP(buffer) = timestamp;
 

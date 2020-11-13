@@ -26,7 +26,7 @@ The sizes for appsrc caps are set automatically, but the framerate must be set i
 ## Recieve:
 
 ```
-udpsrc port=5000 caps = \"video/mpegts, systemstream=(boolean)true, packetsize=(int)188\" buffer-size=5344160 sync=false \
+udpsrc port=5000 caps = \"video/mpegts, systemstream=(boolean)true, packetsize=(int)188\" buffer-size=5344160 \
     ! tsdemux name=dm dm. ! queue ! h264parse ! avdec_h264 ! tee name=t \
     t. ! queue ! videocrop top=0 right=432 left=0 bottom=720 ! videoconvert ! video/x-raw,format=(string)RGB ! appsink name=depth \
     t. ! queue ! videocrop top=480 right=0 left=0 bottom=0 ! videoconvert ! video/x-raw,format=(string)RGB ! appsink name=color \
