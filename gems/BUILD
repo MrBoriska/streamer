@@ -1,6 +1,6 @@
 
 load("//engine/build:cc_cuda_library.bzl", "cc_cuda_library")
-load("//engine/build:isaac.bzl", "isaac_cc_module", "isaac_cc_library")
+load("//engine/build:isaac.bzl", "isaac_cc_library")
 
 isaac_cc_library(
     name = "colorizer",

@@ -8,8 +8,7 @@ distribution of this software and related documentation without an express
 license agreement from NVIDIA CORPORATION is strictly prohibited.
 """
 
-load("//engine/build:cc_cuda_library.bzl", "cc_cuda_library")
-load("//engine/build:isaac.bzl", "isaac_app", "isaac_cc_module", "isaac_cc_library")
+load("//engine/build:isaac.bzl", "isaac_app", "isaac_cc_module")
 
 isaac_cc_module(
     name = "streamer",
@@ -27,17 +26,16 @@ isaac_cc_module(
         "//engine/core/image",
         "//engine/core/math",
         "//engine/gems/sight",
-        #"@realsense",
     ],
 )
 
 isaac_cc_module(
     name = "reciever",
     srcs = [
-        "Reciever.cpp", #"gstrealsensemeta.cpp",
+        "Reciever.cpp"
     ],
     hdrs = [
-        "Reciever.hpp", #"gstrealsensemeta.h",
+        "Reciever.hpp"
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -47,7 +45,6 @@ isaac_cc_module(
         "//engine/core/image",
         "//engine/core/math",
         "//engine/gems/sight",
-        #"@realsense",
     ],
 )
 
