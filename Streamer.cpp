@@ -109,6 +109,9 @@ void Streamer::tick() {
     show("framerate", 1/getTickDt());
     //show("image_color", [&](sight::Sop& sop) { sop.add(color_image); });
     //show("image_depth", [&](sight::Sop& sop) { sop.add(depth_image_colorized); });
+
+    //show("latency_color", 0.000000001*(rx_color().acqtime() - rx_color().pubtime()));
+    //show("latency_depth", 0.000000001*(rx_depth().acqtime() - rx_depth().pubtime()));
     
     // Push images into Gstreamer pipeline (appsrc)
     pushBuffer(GST_APP_SRC_CAST(appsrc_color), color_image, rx_color().pubtime());
