@@ -23,7 +23,7 @@ __global__ void ImageF32ToHUEImageImpl(StridePointer<const float> image,
   if (min_depth <= d && d <= max_depth) {
     unsigned int dn = 1529.0f*(d-min_depth)/(max_depth-min_depth);
     
-    if (dn <= 255 || 1275 < dn && dn <= 1529)  // 0 < dn <= 60 or 300 < dn < 360
+    if (dn <= 255 || (1275 < dn && dn <= 1529))  // 0 < dn <= 60 or 300 < dn < 360
       R = 255;
     else if (dn <= 510) // 60 < dn <= 120
       R = 510 - dn;
