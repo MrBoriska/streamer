@@ -20,7 +20,7 @@ mpegtsmux name=mux ! udpsink host=192.168.9.100 port=5000  buffer-size=5344160 s
 ```
 
 Connect RGBD to `Streamer/depth` and `Streamer/color` RX Hooks.
-The sizes for appsrc caps are set automatically, but the framerate must be set in `config.framerate`.
+The sizes for appsrc caps are set automatically.
 
 
 ## Recieve:
