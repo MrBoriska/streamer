@@ -1,24 +1,11 @@
 {
-  "name": "streamer",
+  "name": "reciever",
   "modules": [
-    "//packages/streamer:streamer",
+    "//packages/streamer:reciever",
     "message_generators"
   ],
   "graph": {
     "nodes": [
-      {
-        "name": "streamer",
-        "components": [
-          {
-            "name": "message_ledger",
-            "type": "isaac::alice::MessageLedger"
-          },
-          {
-            "name": "Streamer",
-            "type": "isaac::streaming::Streamer"
-          }
-        ]
-      },
       {
         "name": "reciever",
         "components": [
@@ -31,49 +18,16 @@
             "type": "isaac::streaming::Reciever"
           }
         ]
-      },
-      {
-        "name": "message_generator",
-        "components": [
-          {
-            "name": "message_leger",
-            "type": "isaac::alice::MessageLedger"
-          },
-          {
-            "name": "CameraGenerator",
-            "type": "isaac::message_generators::CameraGenerator"
-          }
-        ]
-      }
-    ],
-    "edges": [
-      {
-        "source": "message_generator/CameraGenerator/color_left",
-        "target": "streamer/Streamer/color"
-      },
-      {
-        "source": "message_generator/CameraGenerator/color_right",
-        "target": "streamer/Streamer/depth"
       }
     ]
   },
   "config": {
-    "message_generator" : {
-      "CameraGenerator" : {
-        "tick_period": "30Hz",
-        "cols": 1280,
-        "rows": 720
-      }
-    },
-    "streamer" : {
-      "Streamer" : {
-        "pipeline" : "appsrc name=depth ! videoconvert ! rtpvrawpay ! udpsink host=127.0.0.1 port=5000 appsrc name=color ! videoconvert ! rtpvrawpay ! udpsink host=127.0.0.1 port=5001"
-      }
-    },
     "reciever" : {
       "Reciever" : {
-        "pipeline" : "udpsrc port=5000 caps = \"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)RAW, sampling=(string)YCbCr-4:2:0, depth=(string)8, width=(string)320, height=(string)240, colorimetry=(string)BT601-5, payload=(int)96\" ! rtpvrawdepay ! videoconvert ! appsink name=depth
-                      udpsrc port=5001 caps = \"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)RAW, sampling=(string)YCbCr-4:2:0, depth=(string)8, width=(string)320, height=(string)240, colorimetry=(string)BT601-5, payload=(int)96\" ! rtpvrawdepay ! videoconvert ! appsink name=color"
+        "pipeline" : "udpsrc port=5000 caps = \"video/mpegts, systemstream=(boolean)true, packetsize=(int)188\" buffer-size=5344160 ! tsdemux name=dm dm. ! queue ! h264parse ! avdec_h264 ! tee name=t t. ! queue ! videocrop top=0 right=432 left=0 bottom=720 ! videoconvert ! video/x-raw,format=(string)RGB ! appsink name=depth t. ! queue ! videocrop top=480 right=0 left=0 bottom=0 ! videoconvert ! video/x-raw,format=(string)RGB ! appsink name=color dm. ! queue ! meta/x-klv ! appsink name=data",
+        "tick_period": "30 Hz",
+        "max_depth": 1.5,
+        "min_depth": 0.5
       }
     }
   }

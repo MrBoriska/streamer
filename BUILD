@@ -55,3 +55,11 @@ isaac_app(
         "message_generators",
     ],
 )
+
+isaac_app(
+    name = "reciever",
+    modules = [
+        "//packages/streamer:reciever",
+        "message_generators",
+    ],
+)

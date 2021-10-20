@@ -145,14 +145,17 @@ GstFlowReturn Reciever::onNewDepth (GstAppSink *appsink, gpointer userData) {
     Copy(color_image_view, cuda_depth_colorized);
 
     CudaImage1f cuda_depth_image(cuda_depth_colorized.rows(), cuda_depth_colorized.cols());
-    ImageHUEToF32ImageCuda(cuda_depth_colorized.view(), cuda_depth_image.view(), 0.4, 4.0);
+    
+    float min_depth = codelet->get_min_depth();
+    float max_depth = codelet->get_max_depth();
+    ImageHUEToF32ImageCuda(cuda_depth_colorized.view(), cuda_depth_image.view(), min_depth, max_depth);
 
     //Image1f depth_image(cuda_depth_image.dimensions());
     //Copy(cuda_depth_image, depth_image);
 
     auto depth_image_proto = codelet->tx_depth().initProto();
-    depth_image_proto.setMinDepth(0.4);
-    depth_image_proto.setMaxDepth(4.0);
+    depth_image_proto.setMinDepth(min_depth);
+    depth_image_proto.setMaxDepth(max_depth);
     ToProto(std::move(cuda_depth_image), depth_image_proto.initDepthImage(), codelet->tx_depth().buffers());
 
     //memcpy( &msg.data[0], map.data, map.size );

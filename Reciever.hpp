@@ -3,9 +3,6 @@
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 #include <gst/app/gstappsink.h>
-//#include "opencv2/core.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/imgproc.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
@@ -16,8 +13,6 @@
 #include <fstream>
 
 #include <thread>
-
-//#include <boost/thread.hpp>
 
 #include "engine/alice/alice_codelet.hpp"
 #include "engine/gems/image/color.hpp"
@@ -54,6 +49,8 @@ class Reciever : public alice::Codelet {
 
     ISAAC_PARAM(std::string, pipeline);
     ISAAC_PARAM(int, framerate, 30);
+    ISAAC_PARAM(float, min_depth, 0.4);
+    ISAAC_PARAM(float, max_depth, 4.0);
 
     // Creating a new buffer and to send to the gstreamer pipeline
     static gboolean gstError(GstBus *bus, GstMessage *message, gpointer userData);
