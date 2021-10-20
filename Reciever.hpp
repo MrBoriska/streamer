@@ -4,8 +4,8 @@
 #include <gst/app/gstappsrc.h>
 #include <gst/app/gstappsink.h>
 //#include "opencv2/core.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/imgproc.hpp"
+//#include "opencv2/highgui.hpp"
+//#include "opencv2/imgproc.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>

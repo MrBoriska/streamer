@@ -7,6 +7,8 @@
 #include "packages/streamer/gems/colorizer.hpp"
 //#include "gstrealsensemeta.h"
 
+#include "engine/gems/image/io.hpp"
+
 namespace isaac {
 
 namespace streaming {
@@ -90,20 +92,31 @@ void Streamer::tick() {
     CudaImage3ub cuda_depth_image_colorized(cuda_depth_image.rows(), cuda_depth_image.cols());
     ImageF32ToHUEImageCuda(cuda_depth_image, cuda_depth_image_colorized.view(), depth_image_proto.getMinDepth(), depth_image_proto.getMaxDepth());
 
-    /*
-    CudaImage1f cuda_depth_image_debug(cuda_depth_image_colorized.dimensions());
-    ImageHUEToF32ImageCuda(cuda_depth_image_colorized.view(), cuda_depth_image_debug.view(), 0.4, 4.0);
+    // Debug code begin
+    //CudaImage1f cuda_depth_image_debug(cuda_depth_image_colorized.dimensions());
+    //ImageHUEToF32ImageCuda(cuda_depth_image_colorized.view(), cuda_depth_image_debug.view(), depth_image_proto.getMinDepth(), depth_image_proto.getMaxDepth());
 
-    auto depth_image_debug_proto = tx_depth_debug().initProto();
-    depth_image_debug_proto.setMinDepth(0.4);
-    depth_image_debug_proto.setMaxDepth(4.0);
-    ToProto(std::move(cuda_depth_image_debug), depth_image_debug_proto.initDepthImage(), tx_depth_debug().buffers());
-    tx_depth_debug().publish();
-    */
+    //auto depth_image_debug_proto = tx_depth_debug().initProto();
+    //depth_image_debug_proto.setMinDepth(depth_image_proto.getMinDepth());
+    //depth_image_debug_proto.setMaxDepth(depth_image_proto.getMaxDepth());
+    //ToProto(std::move(cuda_depth_image_debug), depth_image_debug_proto.initDepthImage(), tx_depth_debug().buffers());
+    //tx_depth_debug().publish();
+    // Debug code end
+    
 
     // todo: need delete in future
     Image3ub depth_image_colorized(cuda_depth_image_colorized.dimensions());
     Copy(cuda_depth_image_colorized, depth_image_colorized);
+
+    // saving depth image
+    //SavePng(depth_image_colorized, "/home/nvidia/depth_colorized_1.png");
+
+    // Debug code begin
+    auto depth_colorized_debug_proto = tx_depth_colorized_debug().initProto();
+    depth_colorized_debug_proto.setColorSpace(ColorCameraProto::ColorSpace::RGB);
+    ToProto(std::move(cuda_depth_image_colorized), depth_colorized_debug_proto.initImage(), tx_depth_colorized_debug().buffers());
+    tx_depth_colorized_debug().publish();
+    // Debug code end
 
     // Show Images in Sight
     show("framerate", 1/getTickDt());

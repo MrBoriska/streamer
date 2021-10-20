@@ -145,7 +145,7 @@ GstFlowReturn Reciever::onNewDepth (GstAppSink *appsink, gpointer userData) {
     Copy(color_image_view, cuda_depth_colorized);
 
     CudaImage1f cuda_depth_image(cuda_depth_colorized.rows(), cuda_depth_colorized.cols());
-    ImageHUEToF32ImageCuda(cuda_depth_colorized.view(), cuda_depth_image.view(), 0.4, 4.0);
+    ImageHUEToF32ImageCuda(cuda_depth_colorized.view(), cuda_depth_image.view(), 0.5, 1.5);
 
     //Image1f depth_image(cuda_depth_image.dimensions());
     //Copy(cuda_depth_image, depth_image);

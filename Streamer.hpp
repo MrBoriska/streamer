@@ -46,7 +46,8 @@ class Streamer : public alice::Codelet {
     ISAAC_PROTO_RX(ColorCameraProto, color);
     ISAAC_PROTO_RX(DepthCameraProto, depth);
     ISAAC_PROTO_RX(Pose3dProto, frame_position);
-    //ISAAC_PROTO_TX(DepthCameraProto, depth_debug);
+    ISAAC_PROTO_TX(DepthCameraProto, depth_debug);
+    ISAAC_PROTO_TX(ColorCameraProto, depth_colorized_debug);
 
     ISAAC_PARAM(std::string, pipeline);
     ISAAC_PARAM(int, framerate, 30);
