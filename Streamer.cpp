@@ -148,7 +148,7 @@ void Streamer::pushKLVBuffer(GstAppSrc *appsrc, Pose3dProto::Reader pose_proto, 
 
     P3D data;
     //data.timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>()+std::chrono::nanoseconds(timestamp);
-    data.timestamp = std::chrono::system_clock::now();
+    data.timestamp = node()->clock()->convToUnix(timestamp);
     data.quat[0] = q.getW();
     data.quat[1] = q.getX();
     data.quat[2] = q.getY();
