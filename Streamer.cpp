@@ -140,14 +140,15 @@ void Streamer::setCapsFromImage(GstAppSrc *appsrc, const ImageProto::Reader imag
     gst_caps_unref( app_caps );
 }
 
-void Streamer::pushKLVBuffer(GstAppSrc *appsrc, Pose3dProto::Reader pose_proto, uint64_t timestamp) {
+void Streamer::pushKLVBuffer(GstAppSrc *appsrc, Pose3dProto::Reader pose_proto, int64_t timestamp) {
     
     // Prepare data
     auto q = pose_proto.getRotation().getQ();
     auto t = pose_proto.getTranslation();
 
     P3D data;
-    data.timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>()+std::chrono::nanoseconds(timestamp);
+    //data.timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>()+std::chrono::nanoseconds(timestamp);
+    data.timestamp = std::chrono::system_clock::now();
     data.quat[0] = q.getW();
     data.quat[1] = q.getX();
     data.quat[2] = q.getY();
@@ -178,7 +179,7 @@ void Streamer::pushKLVBuffer(GstAppSrc *appsrc, Pose3dProto::Reader pose_proto, 
     }
 }
 
-void Streamer::pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image, uint64_t timestamp) {
+void Streamer::pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image, int64_t timestamp) {
     int size = rgb_image.num_elements();
     Image3ub to_gst_image(rgb_image.dimensions());
     Copy(rgb_image, to_gst_image);

@@ -53,9 +53,9 @@ class Streamer : public alice::Codelet {
 
     void setCapsFromImage(GstAppSrc *appsrc, const ImageProto::Reader image_proto);
     // Creating a new klv buffer and send to the gstreamer pipeline
-    void pushKLVBuffer(GstAppSrc *appsrc, Pose3dProto::Reader pose_proto, uint64_t timestamp);
+    void pushKLVBuffer(GstAppSrc *appsrc, Pose3dProto::Reader pose_proto, int64_t timestamp);
     // Creating a new buffer and to send to the gstreamer pipeline
-    void pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image, uint64_t timestamp);
+    void pushBuffer(GstAppSrc *appsrc, const ImageConstView3ub rgb_image, int64_t timestamp);
 
     static gboolean gstError(GstBus *bus, GstMessage *message, gpointer userData);
 
