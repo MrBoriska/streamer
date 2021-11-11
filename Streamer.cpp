@@ -9,9 +9,11 @@
 
 #include "engine/gems/image/io.hpp"
 
-//#include <iostream>
-//#include <iomanip>
-//#include <ctime>
+#include <iostream>
+#include <iomanip>
+#include <ctime>
+
+using namespace std::chrono;
 
 namespace isaac {
 
@@ -169,7 +171,7 @@ void Streamer::pushKLVBuffer(GstAppSrc *appsrc, Pose3dProto::Reader pose_proto, 
 
     P3D data;
     //data.timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>()+std::chrono::nanoseconds(timestamp);
-    data.timestamp = std::chrono::system_clock::now();
+    data.timestamp = node()->clock()->convToUnix(timestamp);
     data.quat[0] = q.getW();
     data.quat[1] = q.getX();
     data.quat[2] = q.getY();
@@ -188,11 +190,28 @@ void Streamer::pushKLVBuffer(GstAppSrc *appsrc, Pose3dProto::Reader pose_proto, 
     // Set Timestamp
     GST_BUFFER_TIMESTAMP(buffer) = timestamp;
 
+    
     //LOG_INFO("%" PRId64 "\n", timestamp);
 
-    //const std::time_t t_c = std::chrono::system_clock::to_time_t(data.timestamp);
-    //std::cout << "24 hours ago, the time was "
-    //          << std::put_time(std::localtime(&t_c), "%F %T.\n") << std::flush;
+    //Unix time
+    const std::time_t t_c = std::chrono::system_clock::to_time_t(system_clock::now());
+    std::cout << "System clock "
+              << std::put_time(std::localtime(&t_c), "%Y-%m-%d %H:%M:%S\n") << std::flush;
+    
+    //Up time
+    auto t_1 = std::chrono::time_point<std::chrono::system_clock>()+std::chrono::nanoseconds(timestamp);
+    const std::time_t t_c1 = std::chrono::system_clock::to_time_t(t_1);
+    std::cout << "Steady clock "
+              << std::put_time(std::localtime(&t_c1), "%Y-%m-%d %H:%M:%S\n") << std::flush;
+
+    // By timestamp
+    const std::time_t t_c2 = std::chrono::system_clock::to_time_t(data.timestamp);
+    std::cout << "Timestamp "
+              << std::put_time(std::localtime(&t_c2), "%Y-%m-%d %H:%M:%S\n") << std::flush;
+
+    std::cout << "Diff [ms] "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(system_clock::now()-data.timestamp).count() << "\n" << std::flush;
+    
 
     // Push buffer
     if (buffer == NULL) {
