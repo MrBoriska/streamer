@@ -94,7 +94,11 @@ void Streamer::tick() {
     ASSERT(ok, "Failed to deserialize the depth image");
 
     CudaImage3ub cuda_depth_image_colorized(cuda_depth_image.rows(), cuda_depth_image.cols());
+    auto t0 = std::chrono::high_resolution_clock::now();
     ImageF32ToHUEImageCuda(cuda_depth_image, cuda_depth_image_colorized.view(), depth_image_proto.getMinDepth(), depth_image_proto.getMaxDepth());
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    show("colorize", std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count());
 
     // Debug code begin
     //CudaImage1f cuda_depth_image_debug(cuda_depth_image_colorized.dimensions());
