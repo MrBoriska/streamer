@@ -180,6 +180,11 @@ GstFlowReturn Reciever::onNewData (GstAppSink *appsink, gpointer userData) {
     // Convert to Isaac SDK ImageProto
     P3D* poseptr = reinterpret_cast<P3D*>(map.data);
 
+    auto capture_time = poseptr->timestamp;
+    auto now_time = std::chrono::system_clock::now();
+
+    codelet->show("recieve_latency", std::chrono::duration_cast<std::chrono::milliseconds>(now_time-capture_time).count());
+
     codelet->show("quat.w", poseptr->quat[0]);
     codelet->show("quat.x", poseptr->quat[1]);
     codelet->show("quat.y", poseptr->quat[2]);
@@ -187,6 +192,8 @@ GstFlowReturn Reciever::onNewData (GstAppSink *appsink, gpointer userData) {
     codelet->show("trans.x", poseptr->trans[0]);
     codelet->show("trans.y", poseptr->trans[1]);
     codelet->show("trans.z", poseptr->trans[2]);
+    
+    
 
     //codelet->tx_depth().publish();
 

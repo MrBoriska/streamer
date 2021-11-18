@@ -192,7 +192,7 @@ void Streamer::pushKLVBuffer(GstAppSrc *appsrc, Pose3dProto::Reader pose_proto, 
 
     
     //LOG_INFO("%" PRId64 "\n", timestamp);
-
+    /*
     //Unix time
     const std::time_t t_c = std::chrono::system_clock::to_time_t(system_clock::now());
     std::cout << "System clock "
@@ -211,6 +211,9 @@ void Streamer::pushKLVBuffer(GstAppSrc *appsrc, Pose3dProto::Reader pose_proto, 
 
     std::cout << "Diff [ms] "
               << std::chrono::duration_cast<std::chrono::milliseconds>(system_clock::now()-data.timestamp).count() << "\n" << std::flush;
+    */
+    
+    show("send_latency", std::chrono::duration_cast<std::chrono::milliseconds>(system_clock::now()-data.timestamp).count());
     
 
     // Push buffer
