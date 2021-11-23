@@ -183,6 +183,11 @@ GstFlowReturn Reciever::onNewData (GstAppSink *appsink, gpointer userData) {
     auto capture_time = poseptr->timestamp;
     auto now_time = std::chrono::system_clock::now();
 
+    // Send json object
+    auto json_proto = codelet->tx_timestamp().initProto();
+    json_proto.setLower(std::chrono::duration_cast<std::chrono::milliseconds>(capture_time.time_since_epoch()).count());
+    codelet->tx_timestamp().publish();
+
     codelet->show("recieve_latency", std::chrono::duration_cast<std::chrono::milliseconds>(now_time-capture_time).count());
 
     codelet->show("quat.w", poseptr->quat[0]);

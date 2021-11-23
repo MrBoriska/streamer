@@ -275,5 +275,24 @@ gboolean Streamer::gstError(GstBus *bus, GstMessage *message, gpointer userData)
         g_free(debug);
         return FALSE;
     }
+
+void LatencyCalc::start() {
+    
+    tickOnMessage(rx_timestamp());
+}
+
+void LatencyCalc::tick() {
+    auto json_proto = rx_timestamp().getProto();
+    auto now_time = std::chrono::system_clock::now();
+    auto capture_time = std::chrono::time_point<std::chrono::system_clock>()+std::chrono::milliseconds(json_proto.getLower());
+    auto latency = std::chrono::duration_cast<std::chrono::milliseconds>(now_time-capture_time).count();
+    show("recieve_latency", latency);
+
+}
+
+
 }  // namespace streaming
+
+
+
 }  // namespace isaac

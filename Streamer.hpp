@@ -18,6 +18,8 @@
 #include "messages/camera.hpp"
 #include "messages/math.hpp"
 
+#include "messages/uuid.capnp.h"
+
 #include <chrono>
 
 namespace isaac {
@@ -68,7 +70,17 @@ class Streamer : public alice::Codelet {
     GstElement	*appsrc_data	= NULL;  // Used to inject buffers into a pipeline
     GError 		*error 		    = NULL;		// Holds error message if generated
 };
+
+class LatencyCalc : public alice::Codelet {
+  public:
+    void start() override;
+    void tick() override;
+
+
+    ISAAC_PROTO_RX(UuidProto, timestamp);
+};
 }  // namespace streaming
 }  // namespace isaac
 
 ISAAC_ALICE_REGISTER_CODELET(isaac::streaming::Streamer);
+ISAAC_ALICE_REGISTER_CODELET(isaac::streaming::LatencyCalc);

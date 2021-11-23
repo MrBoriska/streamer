@@ -23,6 +23,7 @@
 #include "engine/gems/image/color.hpp"
 #include "messages/camera.hpp"
 #include "messages/math.hpp"
+#include "messages/uuid.hpp"
 
 #include <chrono>
 
@@ -51,6 +52,7 @@ class Reciever : public alice::Codelet {
 
     ISAAC_PROTO_TX(ColorCameraProto, color);
     ISAAC_PROTO_TX(DepthCameraProto, depth);
+    ISAAC_PROTO_TX(UuidProto, timestamp);
 
     ISAAC_PARAM(std::string, pipeline);
     ISAAC_PARAM(int, framerate, 30);
