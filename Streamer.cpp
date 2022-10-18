@@ -63,7 +63,7 @@ void Streamer::start() {
     });
 
     // Sync by timestamps
-    synchronize(rx_color(), rx_depth());
+    synchronize(rx_frame_position(), rx_color(), rx_depth());
     tickOnMessage(rx_depth());
     //tickPeriodically(1.0/20.0);
 }
@@ -100,19 +100,19 @@ void Streamer::tick() {
     //show("latency_depth", 0.000000001*(rx_depth().acqtime() - rx_depth().pubtime()));
     
     // Push images into Gstreamer pipeline (appsrc)
-    pushBuffer(GST_APP_SRC_CAST(appsrc_color), color_image, rx_color().pubtime());
-    pushBuffer(GST_APP_SRC_CAST(appsrc_depth), depth_image_colorized, rx_depth().pubtime());
+    pushBuffer(GST_APP_SRC_CAST(appsrc_color), color_image, rx_color().acqtime());
+    pushBuffer(GST_APP_SRC_CAST(appsrc_depth), depth_image_colorized, rx_depth().acqtime());
     
     if (rx_frame_position().available()) {
         auto pos_proto = rx_frame_position().getProto();
 
 
-        show("pose_time", ToSeconds(rx_frame_position().pubtime()-rx_frame_position().pubtime()));
-        show("depth_time", ToSeconds(rx_depth().pubtime()-rx_frame_position().pubtime()));
-        show("color_time", ToSeconds(rx_color().pubtime()-rx_frame_position().pubtime()));
+        show("pose_time", ToSeconds(rx_frame_position().acqtime()-rx_frame_position().acqtime()));
+        show("depth_time", ToSeconds(rx_depth().acqtime()-rx_frame_position().acqtime()));
+        show("color_time", ToSeconds(rx_color().acqtime()-rx_frame_position().acqtime()));
 
 
-        pushKLVBuffer(GST_APP_SRC_CAST(appsrc_data), pos_proto, rx_frame_position().pubtime());
+        pushKLVBuffer(GST_APP_SRC_CAST(appsrc_data), pos_proto, rx_frame_position().acqtime());
     }
 }
 
