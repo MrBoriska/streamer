@@ -107,9 +107,9 @@ void Streamer::tick() {
         auto pos_proto = rx_frame_position().getProto();
 
 
-        show("pose_time", rx_frame_position().pubtime()-rx_frame_position().pubtime());
-        show("depth_time", rx_depth().pubtime()-rx_frame_position().pubtime());
-        show("color_time", rx_color().pubtime()-rx_frame_position().pubtime());
+        show("pose_time", ToSeconds(rx_frame_position().pubtime()-rx_frame_position().pubtime()));
+        show("depth_time", ToSeconds(rx_depth().pubtime()-rx_frame_position().pubtime()));
+        show("color_time", ToSeconds(rx_color().pubtime()-rx_frame_position().pubtime()));
 
 
         pushKLVBuffer(GST_APP_SRC_CAST(appsrc_data), pos_proto, rx_frame_position().pubtime());
@@ -239,14 +239,13 @@ void Colorizer::tick() {
     CudaImage3ub cuda_depth_image_colorized(cuda_depth_image.rows(), cuda_depth_image.cols());
     ImageF32ToHUEImageCuda(cuda_depth_image, cuda_depth_image_colorized.view(), depth_image_proto.getMinDepth(), depth_image_proto.getMaxDepth());
 
-    // todo: need delete in future
+    // copy from cuda to cpu
     //Image3ub depth_image_colorized(cuda_depth_image_colorized.dimensions());
     //Copy(cuda_depth_image_colorized, depth_image_colorized);
 
-
     auto depth_colorizeed_proto = tx_depth_colorized().initProto();
     ToProto(std::move(cuda_depth_image_colorized), depth_colorizeed_proto.initImage(), tx_depth_colorized().buffers());
-    tx_depth_colorized().publish(rx_depth().pubtime());
+    tx_depth_colorized().publish(rx_depth().acqtime());
 
 }
 
