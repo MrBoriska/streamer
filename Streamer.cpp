@@ -12,6 +12,7 @@ namespace isaac {
 namespace streaming {
 
 void Streamer::start() {
+
     // Initialize GStreamer
     int argc = 0;
     char **argv;
@@ -63,10 +64,13 @@ void Streamer::start() {
 
     // Sync by timestamps
     synchronize(rx_color(), rx_depth());
-    tickOnMessage(rx_color());
+    tickOnMessage(rx_depth());
+    //tickPeriodically(1.0/20.0);
 }
 
 void Streamer::tick() {
+
+    if (!rx_color().available() || !rx_depth().available()) return;
     
     auto color_image_proto = rx_color().getProto();
     auto depth_image_proto = rx_depth().getProto();
@@ -74,7 +78,7 @@ void Streamer::tick() {
     if (isFirstTick()) {
         // Create a caps (capabilities) struct that gets feed into the appsrc structure.
         setCapsFromImage(GST_APP_SRC( appsrc_color ), color_image_proto.getImage());
-        setCapsFromImage(GST_APP_SRC( appsrc_depth ), depth_image_proto.getDepthImage());
+        setCapsFromImage(GST_APP_SRC( appsrc_depth ), depth_image_proto.getImage());
     }
 
     if (!g_main_loop_is_running(loop)) return;
@@ -83,27 +87,9 @@ void Streamer::tick() {
     ImageConstView3ub color_image;
     bool ok = FromProto(color_image_proto.getImage(), rx_color().buffers(), color_image);
     ASSERT(ok, "Failed to deserialize the color image");
-    CudaImageConstView1f cuda_depth_image;
-    ok = FromProto(depth_image_proto.getDepthImage(), rx_depth().buffers(), cuda_depth_image);
+    ImageConstView3ub depth_image_colorized;
+    ok = FromProto(depth_image_proto.getImage(), rx_depth().buffers(), depth_image_colorized);
     ASSERT(ok, "Failed to deserialize the depth image");
-
-    CudaImage3ub cuda_depth_image_colorized(cuda_depth_image.rows(), cuda_depth_image.cols());
-    ImageF32ToHUEImageCuda(cuda_depth_image, cuda_depth_image_colorized.view(), depth_image_proto.getMinDepth(), depth_image_proto.getMaxDepth());
-
-    /*
-    CudaImage1f cuda_depth_image_debug(cuda_depth_image_colorized.dimensions());
-    ImageHUEToF32ImageCuda(cuda_depth_image_colorized.view(), cuda_depth_image_debug.view(), 0.4, 4.0);
-
-    auto depth_image_debug_proto = tx_depth_debug().initProto();
-    depth_image_debug_proto.setMinDepth(0.4);
-    depth_image_debug_proto.setMaxDepth(4.0);
-    ToProto(std::move(cuda_depth_image_debug), depth_image_debug_proto.initDepthImage(), tx_depth_debug().buffers());
-    tx_depth_debug().publish();
-    */
-
-    // todo: need delete in future
-    Image3ub depth_image_colorized(cuda_depth_image_colorized.dimensions());
-    Copy(cuda_depth_image_colorized, depth_image_colorized);
 
     // Show Images in Sight
     show("framerate", 1/getTickDt());
@@ -119,6 +105,13 @@ void Streamer::tick() {
     
     if (rx_frame_position().available()) {
         auto pos_proto = rx_frame_position().getProto();
+
+
+        show("pose_time", rx_frame_position().pubtime()-rx_frame_position().pubtime());
+        show("depth_time", rx_depth().pubtime()-rx_frame_position().pubtime());
+        show("color_time", rx_color().pubtime()-rx_frame_position().pubtime());
+
+
         pushKLVBuffer(GST_APP_SRC_CAST(appsrc_data), pos_proto, rx_frame_position().pubtime());
     }
 }
@@ -226,5 +219,36 @@ gboolean Streamer::gstError(GstBus *bus, GstMessage *message, gpointer userData)
         g_free(debug);
         return FALSE;
     }
+
+
+
+void Colorizer::start() {
+
+    // Sync by timestamps
+    tickOnMessage(rx_depth());
+}
+
+void Colorizer::tick() {
+    
+    auto depth_image_proto = rx_depth().getProto();
+
+    CudaImageConstView1f cuda_depth_image;
+    auto ok = FromProto(depth_image_proto.getDepthImage(), rx_depth().buffers(), cuda_depth_image);
+    ASSERT(ok, "Failed to deserialize the depth image");
+
+    CudaImage3ub cuda_depth_image_colorized(cuda_depth_image.rows(), cuda_depth_image.cols());
+    ImageF32ToHUEImageCuda(cuda_depth_image, cuda_depth_image_colorized.view(), depth_image_proto.getMinDepth(), depth_image_proto.getMaxDepth());
+
+    // todo: need delete in future
+    //Image3ub depth_image_colorized(cuda_depth_image_colorized.dimensions());
+    //Copy(cuda_depth_image_colorized, depth_image_colorized);
+
+
+    auto depth_colorizeed_proto = tx_depth_colorized().initProto();
+    ToProto(std::move(cuda_depth_image_colorized), depth_colorizeed_proto.initImage(), tx_depth_colorized().buffers());
+    tx_depth_colorized().publish(rx_depth().pubtime());
+
+}
+
 }  // namespace streaming
 }  // namespace isaac

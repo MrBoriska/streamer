@@ -44,9 +44,8 @@ class Streamer : public alice::Codelet {
     void stop() override;
 
     ISAAC_PROTO_RX(ColorCameraProto, color);
-    ISAAC_PROTO_RX(DepthCameraProto, depth);
+    ISAAC_PROTO_RX(ColorCameraProto, depth);
     ISAAC_PROTO_RX(Pose3dProto, frame_position);
-    //ISAAC_PROTO_TX(DepthCameraProto, depth_debug);
 
     ISAAC_PARAM(std::string, pipeline);
     ISAAC_PARAM(int, framerate, 30);
@@ -67,7 +66,19 @@ class Streamer : public alice::Codelet {
     GstElement	*appsrc_data	= NULL;  // Used to inject buffers into a pipeline
     GError 		*error 		    = NULL;		// Holds error message if generated
 };
+
+class Colorizer : public alice::Codelet {
+  public:
+    void start() override;
+    void tick() override;
+
+    ISAAC_PROTO_RX(DepthCameraProto, depth);
+    ISAAC_PROTO_TX(ColorCameraProto, depth_colorized);
+};
+
+
 }  // namespace streaming
 }  // namespace isaac
 
 ISAAC_ALICE_REGISTER_CODELET(isaac::streaming::Streamer);
+ISAAC_ALICE_REGISTER_CODELET(isaac::streaming::Colorizer);
