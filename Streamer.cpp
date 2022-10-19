@@ -64,6 +64,7 @@ void Streamer::start() {
 
     // Sync by timestamps
     synchronize(rx_frame_position(), rx_color(), rx_depth());
+    set_synchronize_config(50, SecondsToNano(0.01));
     tickOnMessage(rx_depth());
     //tickPeriodically(1.0/20.0);
 }
