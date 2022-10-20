@@ -63,10 +63,14 @@ void Streamer::start() {
     });
 
     // Sync by timestamps
-    synchronize(rx_frame_position(), rx_color(), rx_depth());
-    set_synchronize_config(50, SecondsToNano(0.01));
+    if (get_sync_with_pose()) {
+        synchronize(rx_frame_position(), rx_color(), rx_depth());
+        set_synchronize_config(50, SecondsToNano(0.01));
+    } else {
+        synchronize(rx_color(), rx_depth());
+    }
+
     tickOnMessage(rx_depth());
-    //tickPeriodically(1.0/20.0);
 }
 
 void Streamer::tick() {

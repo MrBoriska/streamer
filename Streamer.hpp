@@ -49,6 +49,7 @@ class Streamer : public alice::Codelet {
 
     ISAAC_PARAM(std::string, pipeline);
     ISAAC_PARAM(int, framerate, 30);
+    ISAAC_PARAM(bool, sync_with_pose, false);
 
     void setCapsFromImage(GstAppSrc *appsrc, const ImageProto::Reader image_proto);
     // Creating a new klv buffer and send to the gstreamer pipeline
